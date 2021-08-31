@@ -1,0 +1,24 @@
+{
+    "name": "liquidlight/backend_modules_datatables",
+    "type": "typo3-cms-extension",
+    "description": "Interactive datatables for the TYPO backend",
+    "authors": [
+        {
+            "name": "Mike Street",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "typo3/cms-core": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "LiquidLight\\BackendModulesDatatables\\": "Classes"
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+           "extension-key": "backend_modules_datatables"
+        }
+     }
+}

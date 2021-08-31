@@ -1,0 +1,36 @@
+###
+# Gitlab CI
+#
+# @author Mike Street
+# @date 06-2021
+#
+###
+
+stages:
+  - Linting
+  - Release
+
+# Use custom LL docker image
+image: ll:latest
+
+# Lint the PHP
+php:coding-standards:
+  stage: Linting
+  script:
+    - lint php:coding-standards
+
+release:tag:
+  stage: Release
+  script:
+    - 'curl --header "Job-Token: $CI_JOB_TOKEN" --data tag=$CI_COMMIT_TAG "https://gitlab.lldev.co.uk/api/v4/projects/$CI_PROJECT_ID/packages/composer"'
+  only:
+    - tags
+
+release:branch:
+  stage: Release
+  script:
+    - 'curl --header "Job-Token: $CI_JOB_TOKEN" --data branch=$CI_COMMIT_BRANCH "https://gitlab.lldev.co.uk/api/v4/projects/$CI_PROJECT_ID/packages/composer"'
+  only:
+    - master
+    - /^rc\/.*$/i
+
