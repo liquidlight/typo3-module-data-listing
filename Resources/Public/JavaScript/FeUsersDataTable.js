@@ -24,38 +24,6 @@ define([
             "language": {
                 "emptyTable": "No data available in table"
             },
-            // "lengthMenu": [
-            //     [
-            //         10, 
-            //         25, 
-            //         50, 
-            //         100, 
-            //         -1
-            //     ],
-            //     [
-            //         10, 
-            //         25, 
-            //         50, 
-            //         100, 
-            //         "All"
-            //     ]
-            // ],
-            // "columnDefs": [
-            //     {
-            //         "targets": [
-            //             10,
-            //             11,
-            //             12,
-            //             13,
-            //             14,
-            //             16,
-            //             17,
-            //             18
-            //         ],
-            //         "visible": false,
-            //         "searchable": false
-            //     },
-            // ],
         });
     }
 

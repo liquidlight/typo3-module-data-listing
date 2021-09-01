@@ -32,13 +32,13 @@ class FeUsersController extends DatatableController
 	 * @access protected
 	 */
 	protected $headers = [
-		'uid' => 'ID',
-		'username' => 'Username',
-		'usergroup' => 'Group',
-		'title' => 'Title',
-		'first_name' => 'First Name',
-		'last_name' => 'Last Name',
-		'email' => 'Email',
+		'fe_users.uid' => 'ID',
+		'fe_users.username' => 'Username',
+		'fe_users.usergroup' => 'Group',
+		'fe_users.title' => 'Title',
+		'fe_users.first_name' => 'First Name',
+		'fe_users.last_name' => 'Last Name',
+		'fe_users.email' => 'Email',
 	];
 
 	/**
@@ -49,6 +49,7 @@ class FeUsersController extends DatatableController
 		/** @var BackendTemplateView $view */
 		parent::initializeView($view);
 
+		// Load the JS
 		if ($view instanceof BackendTemplateView) {
 			$view->getModuleTemplate()->getPageRenderer()->loadRequireJsModule('TYPO3/CMS/BackendModulesDatatables/FeUsersDataTable');
 		}
@@ -99,7 +100,7 @@ class FeUsersController extends DatatableController
 	public function indexAction(): void
 	{
 		$this->view->assignMultiple([
-			'headers' => array_values($this->headers),
+			'headers' => array_values(parent::getHeaders($this->headers)),
 			'groups' => $this->getUsergroups(),
 		]);
 	}
@@ -145,6 +146,9 @@ class FeUsersController extends DatatableController
 			$query = $this->applyFilters($queryBuilder, $query, $params);
 		}
 
+		// Apply search
+		$query = $this->applySearch($queryBuilder, $query, $params);
+
 		$count = $query
 			->execute()
 			->fetchColumn(0)
@@ -173,7 +177,7 @@ class FeUsersController extends DatatableController
 
 		// Re-apply restrictions
 		$query = $queryBuilder
-			->select(...array_keys($this->headers))
+			->select(...array_keys(parent::getHeaders($this->headers)))
 			->from('fe_users')
 			->where(
 				$queryBuilder->expr()->eq(
@@ -204,41 +208,14 @@ class FeUsersController extends DatatableController
 		$order = $params['order'][0];
 
 		if (isset($order['column']) && $order['dir']) {
-			$headerKeys = array_keys($this->headers);
+			$headerKeys = array_keys(parent::getHeaders($this->headers));
 			$query = $query->orderBy($headerKeys[$order['column']], $order['dir']);
 		} else {
 			$query = $query->orderBy('fe_users.uid', 'DESC');
 		}
 
-		// Search
-		if ($params['search']['value']) {
-			$query = $query
-				->andWhere(
-					$queryBuilder->expr()->like(
-						'fe_users.name',
-						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
-					)
-				)
-				->orWhere(
-					$queryBuilder->expr()->like(
-						'fe_users.username',
-						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
-					)
-				)
-				->orWhere(
-					$queryBuilder->expr()->like(
-						'fe_users.email',
-						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
-					)
-				)
-				->orWhere(
-					$queryBuilder->expr()->like(
-						'fe_users.uid',
-						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
-					)
-				)
-			;
-		}
+		// Apply search
+		$query = $this->applySearch($queryBuilder, $query, $params);
 
 		// Page size
 		if ($params['length'] > 0) {
@@ -256,21 +233,48 @@ class FeUsersController extends DatatableController
 	}
 
 	/**
+	 * Apply search to query
+	 */
+	private function applySearch(QueryBuilder $queryBuilder, QueryBuilder $query, array $params): QueryBuilder
+	{
+		if ($params['search']['value']) {
+			$columnStr = parent::getModuleSettings()['searchableColumns'];
+			$searchableColumns = GeneralUtility::trimExplode(',', $columnStr);
+
+			$searchQuery = $queryBuilder->expr()->orX();
+			foreach ($searchableColumns as $field) {
+				$searchQuery->add(
+					$queryBuilder->expr()->like(
+						$field,
+						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
+					)
+				);
+			}
+
+			$query = $query->andWhere($searchQuery);
+		}
+
+		return $query;
+	}
+
+	/**
 	 * Apply joins to query
 	 */
 	private function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
 	{
+		$joins = parent::getModuleSettings()['joins.'];
+
 		// Apply joins from settings
-		if (isset($this->settings['joins'])) {
-			foreach ($this->settings['joins'] as $i => $join) {
+		if ($joins) {
+			foreach ($joins as $join) {
 				switch ($join['type']) {
 					case 'leftJoin':
 						$query = $query
 							->leftJoin(
 								'fe_users',
 								$join['table'],
-								$i,
-								$queryBuilder->expr()->eq($i . $join['localIdentifier'], $queryBuilder->quoteIdentifier('fe_users.' . $join['foreignIdentifier']))
+								$join['table'],
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier('fe_users.' . $join['foreignIdentifier']))
 							)
 						;
 						break;
@@ -279,8 +283,8 @@ class FeUsersController extends DatatableController
 							->rightJoin(
 								'fe_users',
 								$join['table'],
-								$i,
-								$queryBuilder->expr()->eq($i . $join['localIdentifier'], $queryBuilder->quoteIdentifier('fe_users.' . $join['foreignIdentifier']))
+								$join['table'],
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier('fe_users.' . $join['foreignIdentifier']))
 							)
 						;
 						break;
@@ -289,8 +293,8 @@ class FeUsersController extends DatatableController
 							->innerJoin(
 								'fe_users',
 								$join['table'],
-								$i,
-								$queryBuilder->expr()->eq($i . $join['localIdentifier'], $queryBuilder->quoteIdentifier('fe_users.' . $join['foreignIdentifier']))
+								$join['table'],
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier('fe_users.' . $join['foreignIdentifier']))
 							)
 						;
 						break;
@@ -299,29 +303,29 @@ class FeUsersController extends DatatableController
 		}
 
 		// Apply restrictions for joins from settings
-		if (!isset($this->settings['joins'])) {
+		if (!$joins) {
 			return $query;
 		}
 
-		for ($i = 1; $i <= count($this->settings['joins']); $i++) {
+		foreach ($joins as $join) {
 			$query = $query
 				->where(
 					$queryBuilder->expr()->orX(
 						$queryBuilder->expr()->eq(
-							$i . '.deleted',
+							$join['table'] . '.deleted',
 							0
 						),
 						$queryBuilder->expr()->isNull(
-							$i . '.deleted'
+							$join['table'] . '.deleted'
 						),
 					),
 					$queryBuilder->expr()->orX(
 						$queryBuilder->expr()->eq(
-							$i . '.hidden',
+							$join['table'] . '.hidden',
 							0
 						),
 						$queryBuilder->expr()->isNull(
-							$i . '.hidden'
+							$join['table'] . '.hidden'
 						),
 					),
 				)

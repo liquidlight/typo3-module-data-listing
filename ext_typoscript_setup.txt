@@ -1,20 +1,5 @@
 module.tx_backendmodulesdatatables {
-    settings {
-		joins {
-            1 {
-                type = leftJoin
-                table = tx_ese_societies
-                localIdentifier = uid
-                foreignIdentifier = tx_ese_society_uid
-            }
-        }
-        additionalColumns {
-            fe_users {
-                tx_ese_member_number = Member #
-            }
-            tx_ese_societies {
-                international_name = Society
-            }
-        }
+  settings {
+    searchableColumns = fe_users.name,fe_users.username,fe_users.email,fe_users.uid
 	}
 }
