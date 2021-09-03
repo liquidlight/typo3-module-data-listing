@@ -72,6 +72,22 @@ class FeUsersController extends DatatableController
 		// Format payment data
 		$data = [];
 		foreach ($tableData as $row) {
+			// Build the edit link
+			$returnUrl = $uriBuilder->buildUriFromRoute('llbackend_BackendModulesDatatablesTxBackendModulesDatatablesFeusers', []);
+
+			$uriParameters = [
+				'edit' => [
+					'fe_users' => [
+						$row['uid'] => 'edit',
+					],
+				],
+				'returnUrl' => $returnUrl->getPath() . '?' . $returnUrl->getQuery(),
+			];
+			$editLink = $uriBuilder->buildUriFromRoute('record_edit', $uriParameters);
+
+			// Wrap the uid in the edit link
+			$row['uid'] = '<a href="' . $editLink . '" title="Edit record">' . $row['uid'] . '</a>';
+
 			// Lookup the usergroups and replace IDs with titles
 			$usergroups = [];
 			foreach (explode(',', $row['usergroup']) as $usergroupUid) {
