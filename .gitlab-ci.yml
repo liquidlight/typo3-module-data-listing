@@ -11,7 +11,7 @@ stages:
   - Release
 
 # Use custom LL docker image
-image: ll:latest
+image: registry.gitlab.lldev.co.uk/devops/containers/buster-node-ci
 
 # Lint the PHP
 php:coding-standards:
