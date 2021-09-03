@@ -29,18 +29,19 @@ It is possible to bolt on data from related tables by making use of the `module.
 3. `localIdentifier` is the unique identifier of the related table
 4. `foreignIdentifier` is the matching field in the fe_users table
 
+**Setup**
 ```
 module.tx_backendmodulesdatatables {
-    settings {
+	settings {
 		joins {
-            1 {
-                type = leftJoin
-                table = related_table
-                localIdentifier = uid
-                foreignIdentifier = related_table_uid
-            }
-        }
-    }
+			1 {
+				type = leftJoin
+				table = related_table
+				localIdentifier = uid
+				foreignIdentifier = related_table_uid
+			}
+		}
+	}
 }
 ```
 
@@ -49,15 +50,17 @@ It is possible to pull in additional columns from the fe_users table as well as 
 1. `table` is the name of the table you wish to pull the additional column from (this can be fe_users or any joined tables)
 2. `column` is the name of the column you wish to pull in
 3. `label` is the label that is used in the datatable header
+
+**Setup**
 ```
 module.tx_backendmodulesdatatables {
-    settings {
+	settings {
 		additionalColumns {
-            table {
-                column = label
-            }
-        }
-    }
+			table {
+				column = label
+			}
+		}
+	}
 }
 ```
 
@@ -65,11 +68,22 @@ module.tx_backendmodulesdatatables {
 The default searchable columns are specified above however it is possible to add and/or remove columns from this list by making use of the `module.tx_backendmodulesdatatables.settings.searchableColumns` object where:
 1. `table` is the name of the table you wish to pull the searchable column from (this can be fe_users or any joined tables)
 2. `column` is the name of the column you wish to make searchable
+
+**Setup**
 ```
 module.tx_backendmodulesdatatables {
-    settings {
-		searchableColumns := addToList(table.column1, table.column2)
-        searchableColumns := removeFromList(table.column3)
-    }
+	settings {
+		searchableColumns := addToList(table.column1,table.column2)
+		searchableColumns := removeFromList(table.column3)
+	}
+}
+```
+
+It is also possible to completely reset the searchable columns:
+```
+module.tx_backendmodulesdatatables {
+	settings {
+		searchableColumns = table.column1,table.column2
+	}
 }
 ```
