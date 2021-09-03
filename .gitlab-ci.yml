@@ -19,6 +19,12 @@ php:coding-standards:
   script:
     - lint php:coding-standards
 
+# Lint the Typoscript
+typoscript:lint:
+  stage: Linting
+  script:
+    - lint typoscript:lint
+
 release:tag:
   stage: Release
   script:
