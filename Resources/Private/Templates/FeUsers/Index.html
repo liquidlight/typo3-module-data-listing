@@ -1,1 +1,27 @@
-<f:layout name="FeUsersDataTable" />
+{namespace be = TYPO3\CMS\Backend\ViewHelpers}
+{namespace core = TYPO3\CMS\Core\ViewHelpers}
+
+<f:layout name="Default" />
+
+<f:section name="head">
+	<link rel="stylesheet" type="text/css" href="{f:uri.resource(path:'Css/FeUsersDataTable.css')}" />
+</f:section>
+
+<f:section name="body">
+	<h1>
+		<f:translate key="LLL:EXT:backend_modules_datatables/Resources/Private/Language/locallang_feusers.xml:title" />
+	</h1>
+
+	<f:render partial="FeUsers/Groups" arguments="{groups: groups}" />
+
+
+	<table class="table table-striped table-hover" id="feusers-table" style="width:100%;" data-status="{status}">
+		<thead>
+			<tr>
+				<f:for each="{headers}" as="header">
+					<th>{header}</th>
+				</f:for>
+			</tr>
+		</thead>
+	</table>
+</f:section>

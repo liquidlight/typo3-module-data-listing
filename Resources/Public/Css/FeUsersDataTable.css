@@ -1,0 +1,107 @@
+.t3js-toggle-recordlist.collapsed img {
+	transform: rotate(-180deg);
+}
+
+.form-control {
+	margin: 0 0.5rem;
+}
+.form-inline select.form-control {
+	min-width: 6rem;
+}
+.form-group.usergroups > div {
+	display: flex;
+	align-items: flex-start;
+	flex-wrap: wrap;
+	margin-left: -18px;
+	margin-bottom: 18px;
+}
+.form-group.usergroups > div label {
+	margin-left: 18px;;
+}
+
+.dataTables_wrapper {
+	position: relative;
+}
+.dataTables_processing {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	left: 0;
+	background:rgba(255, 255, 255, 0.8);
+	z-index: 10;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	font-size: 1.2rem;
+}
+.dataTables_processing[style="display: block;"] {
+	display: flex !important;
+}
+
+.dt-buttons {
+	padding-top: 18px;
+	border-top: thin solid #ddd;
+}
+
+.paging_full_numbers {
+	float: none;
+	margin: 18px 1px;
+	padding: 1px;
+	overflow: hidden;
+}
+.paginate_button {
+	position: relative;
+    float: left;
+    padding: 6px 6px;
+    margin-left: -1px;
+    line-height: 1.5;
+    color: #212424;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #ddd;
+	cursor: pointer;
+	text-align: center;
+    min-width: 3rem;
+}
+.paginate_button.current {
+	color: #000;
+	background-color: #eee;
+}
+.paginate_button:hover {
+	color: #000;
+    background-color: #f5f5f5;
+    border-color: #ddd;
+}
+.paginate_button.disabled::before {
+	opacity: 0.5;
+}
+
+.paginate_button.first,
+.paginate_button.previous,
+.paginate_button.next,
+.paginate_button.last {
+	font-size: 0;
+}
+.paginate_button.first::before,
+.paginate_button.previous::before,
+.paginate_button.next::before,
+.paginate_button.last::before {
+	content: '';
+	display: inline-block;
+	background-image: url('/typo3/sysext/core/Resources/Public/Icons/T3Icons/actions/actions-view-paging-first.svg');
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 1.8rem;
+	height: 1.8rem;
+}
+
+.paginate_button.previous::before {
+	background-image: url('/typo3/sysext/core/Resources/Public/Icons/T3Icons/actions/actions-view-paging-previous.svg');
+}
+.paginate_button.next::before {
+	background-image: url('/typo3/sysext/core/Resources/Public/Icons/T3Icons/actions/actions-view-paging-next.svg');
+}
+.paginate_button.last::before {
+	background-image: url('/typo3/sysext/core/Resources/Public/Icons/T3Icons/actions/actions-view-paging-last.svg');
+}

@@ -11,9 +11,18 @@ define([
 			"processing": true,
 			"serverSide": true,
 			"order": [[ 0, "desc" ]],
-			"dom": "<'form-inline form-inline-spaced'lf>rtipB",
+			"dom": "<'form-inline form-inline-spaced'lf>prtipB",
 			"buttons": [
-				"csv"
+				{
+					extend: 'csv',
+					text: 'Download as CSV',
+					className: 'btn btn-primary'
+				},
+				{
+					extend: 'copy',
+					text: 'Copy to clipboard',
+					className: 'btn btn-default'
+				},
 			],
 			"pagingType" : "full_numbers",
 			"ajax": {

@@ -10,7 +10,7 @@
 				<source>Frontend Users</source>
 			</trans-unit>
 			<trans-unit id="groups" xml:space="preserve">
-				<source>Groups</source>
+				<source>Filter by Group</source>
 			</trans-unit>
 		</body>
 	</file>
