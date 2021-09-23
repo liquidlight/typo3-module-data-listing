@@ -4,7 +4,7 @@
 		<header/>
 		<body>
 			<trans-unit id="mlang_tabs_tab">
-				<source>LiquidLight</source>
+				<source>Data Tables</source>
 			</trans-unit>
 		</body>
 	</file>

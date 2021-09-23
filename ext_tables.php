@@ -10,9 +10,9 @@ if (TYPO3_MODE === 'BE') {
 		'labels' => 'LLL:EXT:backend_modules_datatables/Resources/Private/Language/locallang_mod_llbackend.xlf',
 	];
 	\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addModule(
-		'llbackend', // main module key
-		'',             // submodule key
-		'',             // position
+		'llbackend',
+		'',
+		'',
 		'',
 		$paymentsBillsModuleConfiguration
 	);
