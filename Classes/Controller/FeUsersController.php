@@ -6,12 +6,12 @@
  * @author Zaq Mughal <zaq@liquidlight.co.uk>
  * @copyright Liquid Light Ltd.
  * @package TYPO3
- * @subpackage backend_modules_datatables
+ * @subpackage module_data_listing
  */
 
-namespace LiquidLight\BackendModulesDatatables\Controller;
+namespace LiquidLight\ModuleDataListing\Controller;
 
-use LiquidLight\BackendModulesDatatables\Controller\DatatableController;
+use LiquidLight\ModuleDataListing\Controller\DatatableController;
 use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -51,7 +51,7 @@ class FeUsersController extends DatatableController
 
 		// Load the JS
 		if ($view instanceof BackendTemplateView) {
-			$view->getModuleTemplate()->getPageRenderer()->loadRequireJsModule('TYPO3/CMS/BackendModulesDatatables/FeUsersDataTable');
+			$view->getModuleTemplate()->getPageRenderer()->loadRequireJsModule('TYPO3/CMS/ModuleDataListing/FeUsersDataTable');
 		}
 	}
 
@@ -73,7 +73,7 @@ class FeUsersController extends DatatableController
 		$data = [];
 		foreach ($tableData as $row) {
 			// Build the edit link
-			$returnUrl = $uriBuilder->buildUriFromRoute('llbackend_BackendModulesDatatablesTxBackendModulesDatatablesFeusers', []);
+			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_ModuleDataListingTxModuleDataListingFeusers', []);
 
 			$uriParameters = [
 				'edit' => [

@@ -6,12 +6,12 @@
  * @author Zaq Mughal <zaq@liquidlight.co.uk>
  * @copyright Liquid Light Ltd.
  * @package TYPO3
- * @subpackage backend_modules_datatables
+ * @subpackage module_data_listing
  */
 
-namespace LiquidLight\BackendModulesDatatables\Controller;
+namespace LiquidLight\ModuleDataListing\Controller;
 
-use LiquidLight\BackendModulesDatatables\Datatable;
+use LiquidLight\ModuleDataListing\Datatable;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
@@ -34,7 +34,7 @@ abstract class DatatableController extends ActionController implements Datatable
 		/** @var BackendTemplateView $view */
 		parent::initializeView($view);
 
-		$extPath = PathUtility::getAbsoluteWebPath('ext/backend_modules_datatables');
+		$extPath = PathUtility::getAbsoluteWebPath('ext/module_data_listing');
 
 		if ($view instanceof BackendTemplateView) {
 			$view->getModuleTemplate()->getPageRenderer()->addRequireJsConfiguration([
@@ -141,7 +141,7 @@ abstract class DatatableController extends ActionController implements Datatable
 			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
 		;
 
-		if ($settings = $setup['module.']['tx_backendmodulesdatatables.']['settings.']) {
+		if ($settings = $setup['module.']['tx_moduledatalisting.']['settings.']) {
 			return $settings;
 		}
 

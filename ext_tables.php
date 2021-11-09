@@ -3,14 +3,14 @@
 defined('TYPO3_MODE') or die();
 
 if (TYPO3_MODE === 'BE') {
-	// Create a module section "LiquidLight"
+	// Create a module section
 	$paymentsBillsModuleConfiguration = [
 		'access' => 'user,group',
-		'name' => 'llbackend',
-		'labels' => 'LLL:EXT:backend_modules_datatables/Resources/Private/Language/locallang_mod_llbackend.xlf',
+		'name' => 'datalisting',
+		'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
 	];
 	\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addModule(
-		'llbackend',
+		'datalisting',
 		'',
 		'',
 		'',
@@ -22,7 +22,7 @@ if (TYPO3_MODE === 'BE') {
 	foreach ($GLOBALS['TBE_MODULES'] as $key => $val) {
 		if ($key === 'web') {
 			$temp_TBE_MODULES[$key] = $val;
-			$temp_TBE_MODULES['llbackend'] = '';
+			$temp_TBE_MODULES['datalisting'] = '';
 		} else {
 			$temp_TBE_MODULES[$key] = $val;
 		}
@@ -31,17 +31,17 @@ if (TYPO3_MODE === 'BE') {
 
 
 	\TYPO3\CMS\Extbase\Utility\ExtensionUtility::registerModule(
-		'LiquidLight.BackendModulesDatatables',
-		'llbackend',
-		'tx_backend_modules_datatables_feusers',
+		'LiquidLight.ModuleDataListing',
+		'datalisting',
+		'tx_module_data_listing_feusers',
 		'bottom',
 		[
 			FeUsers::class => 'index',
 		],
 		[
 			'access' => 'user,group',
-			'icon' => 'EXT:backend_modules_datatables/Resources/Public/Icons/FeUsers.svg',
-			'labels' => 'LLL:EXT:backend_modules_datatables/Resources/Private/Language/locallang_feusers.xlf',
+			'icon' => 'EXT:module_data_listing/Resources/Public/Icons/FeUsers.svg',
+			'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_feusers.xlf',
 			'navigationComponentId' => '',
         	'inheritNavigationComponentFromMainModule' => false,
 		]

@@ -26,7 +26,7 @@ define([
 			],
 			"pagingType" : "full_numbers",
 			"ajax": {
-				"url": TYPO3.settings.ajaxUrls["backend_modules_datatables_get_fe_users"],
+				"url": TYPO3.settings.ajaxUrls["module_data_listing_get_fe_users"],
 				"data": {
 					"filters": filters,
 				}

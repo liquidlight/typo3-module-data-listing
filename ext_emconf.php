@@ -1,8 +1,8 @@
 <?php
 
 $EM_CONF[$_EXTKEY] = [
-	'title' => 'Liquid Light Backend Modules Datatables',
-	'description' => 'Interactive datatables for the TYPO backend',
+	'title' => 'Data listing for the TYPO3 backend',
+	'description' => 'Interactive datatables for the TYPO3 backend',
 	'category' => 'be',
 	'author' => 'Zaq Mughal',
 	'author_company' => 'Liquid Light Ltd',

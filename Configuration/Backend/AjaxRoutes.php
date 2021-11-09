@@ -1,13 +1,13 @@
 <?php
 
-use LiquidLight\BackendModulesDatatables\Controller\FeUsersController;
+use LiquidLight\ModuleDataListing\Controller\FeUsersController;
 
 /**
- * Definitions for AJAX routes provided by EXT:backend_modules_datatables
+ * Definitions for AJAX routes provided by EXT:module_data_listing
  */
 return [
-	'backend_modules_datatables_get_fe_users' => [
-		'path' => '/ll-backend-modules-datatables/get-fe-users',
+	'module_data_listing_get_fe_users' => [
+		'path' => '/ll-module-data-listing/get-fe-users',
 		'target' => FeUsersController::class . '::renderAjax',
 	],
 ];

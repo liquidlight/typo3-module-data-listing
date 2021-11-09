@@ -8,10 +8,10 @@
  * @author Zaq Mughal <zaq@liquidlight.co.uk>
  * @copyright Liquid Light Ltd.
  * @package TYPO3
- * @subpackage backend_modules_datatables
+ * @subpackage module_data_listing
  */
 
-namespace LiquidLight\BackendModulesDatatables;
+namespace LiquidLight\ModuleDataListing;
 
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
 use Psr\Http\Message\ResponseInterface;
