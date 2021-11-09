@@ -1,13 +1,32 @@
 {
-    "name": "liquidlight/module_data_listing",
+    "name": "liquidlight/module-data-listing",
+    "description": "Interactive datatables for the TYPO3 backend",
     "type": "typo3-cms-extension",
-    "description": "Interactive datatables for the TYPO backend",
+    "license": "GPL-2.0+",
+    "homepage": "https://github.com/liquidlight/module_data_listing",
+    "readme": "./README.md",
+    "keywords": [
+        "TYPO3 CMS",
+        "Backend",
+        "Module",
+        "fe_users",
+        "Export"
+    ],
     "authors": [
         {
-            "name": "Mike Street",
-            "role": "Developer"
+            "name": "Liquid Light",
+            "email": "info@liquidlight.co.uk",
+            "homepage": "https://www.liquidlight.co.uk/"
+        },
+        {
+            "name": "Zaq Mughal",
+            "email": "zaq@liquidlight.co.uk"
         }
     ],
+    "support": {
+        "issues": "https://github.com/liquidlight/module_data_listing/issues",
+        "source": "https://github.com/liquidlight/module_data_listing"
+    },
     "require": {
         "typo3/cms-core": "^9.5"
     },
@@ -18,7 +37,16 @@
     },
     "extra": {
         "typo3/cms": {
-           "extension-key": "module_data_listing"
+            "extension-key": "module_data_listing"
         }
-     }
+    },
+    "scripts": {
+        "prepare-release": [
+            "@extension-create-libs",
+            "rm -rf .github",
+            "rm .gitignore",
+            "rm docker-compose.yml",
+            "rm .project.php_cs"
+        ]
+    }
 }
