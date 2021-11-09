@@ -1,6 +1,6 @@
 {
     "name": "liquidlight/module-data-listing",
-    "description": "Interactive datatables for the TYPO3 backend",
+    "description": "Filterable, searchable and sortable datatables for the TYPO3 backend. Fe_users comes as default.",
     "type": "typo3-cms-extension",
     "license": "GPL-2.0+",
     "homepage": "https://github.com/liquidlight/module_data_listing",

@@ -2,7 +2,7 @@
 
 $EM_CONF[$_EXTKEY] = [
 	'title' => 'Data listing for the TYPO3 backend',
-	'description' => 'Interactive datatables for the TYPO3 backend',
+	'description' => 'Filterable, searchable and sortable datatables for the TYPO3 backend. Fe_users comes as default.',
 	'category' => 'be',
 	'author' => 'Zaq Mughal',
 	'author_company' => 'Liquid Light Ltd',
