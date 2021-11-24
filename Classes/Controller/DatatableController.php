@@ -34,7 +34,7 @@ abstract class DatatableController extends ActionController implements Datatable
 		/** @var BackendTemplateView $view */
 		parent::initializeView($view);
 
-		$extPath = PathUtility::getAbsoluteWebPath('ext/module_data_listing');
+		$extPath = PathUtility::getAbsoluteWebPath('../typo3conf/ext/module_data_listing');
 
 		if ($view instanceof BackendTemplateView) {
 			$view->getModuleTemplate()->getPageRenderer()->addRequireJsConfiguration([
