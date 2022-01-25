@@ -12,14 +12,16 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use LiquidLight\ModuleDataListing\Controller\DatatableController;
+
 use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use Psr\Http\Message\ResponseInterface;
+
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Http\Response;
 
 class FeUsersController extends DatatableController
 {
@@ -58,7 +60,7 @@ class FeUsersController extends DatatableController
 	/**
 	 * Render DataTables ajax call
 	 */
-	public function renderAjax(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface
+	public function renderAjax(ServerRequestInterface $request): Response
 	{
 		$params = $request->getQueryParams();
 		$uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
@@ -104,6 +106,8 @@ class FeUsersController extends DatatableController
 			"recordsFiltered" => $count,
 			"data" => $data,
 		];
+
+		$response = new Response();
 
 		$response->getBody()->write(json_encode($return));
 

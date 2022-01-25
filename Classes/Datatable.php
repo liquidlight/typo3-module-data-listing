@@ -14,13 +14,14 @@
 namespace LiquidLight\ModuleDataListing;
 
 use LiquidLight\ModuleDataListing\Renderable;
-use Psr\Http\Message\ResponseInterface;
+
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Core\Http\Response;
 
 interface Datatable extends Renderable
 {
 	/**
 	 * Render DataTables ajax call
 	 */
-	public function renderAjax(ServerRequestInterface $request, ResponseInterface $response): ResponseInterface;
+	public function renderAjax(ServerRequestInterface $request): Response;
 }
