@@ -109,7 +109,7 @@ abstract class DatatableController extends ActionController implements Datatable
 			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
 		;
 
-		if ($settings = $setup['module.']['tx_moduledatalisting.']['settings.']) {
+		if ($settings = $setup['module.'][$this->moduleName . '.']['settings.']) {
 			return $settings;
 		}
 
@@ -141,10 +141,6 @@ abstract class DatatableController extends ActionController implements Datatable
 			->where(
 				$queryBuilder->expr()->eq(
 					$this->table . '.deleted',
-					0
-				),
-				$queryBuilder->expr()->eq(
-					$this->table . ($this->table == 'fe_users' ? '.disable' : '.hidden'),
 					0
 				),
 			)
@@ -215,10 +211,6 @@ abstract class DatatableController extends ActionController implements Datatable
 			->where(
 				$queryBuilder->expr()->eq(
 					$this->table . '.deleted',
-					0
-				),
-				$queryBuilder->expr()->eq(
-					$this->table . ($this->table == 'fe_users' ? '.disable' : '.hidden'),
 					0
 				),
 			)
@@ -328,15 +320,6 @@ abstract class DatatableController extends ActionController implements Datatable
 						),
 						$queryBuilder->expr()->isNull(
 							$join['table'] . '.deleted'
-						),
-					),
-					$queryBuilder->expr()->orX(
-						$queryBuilder->expr()->eq(
-							$join['table'] . '.hidden',
-							0
-						),
-						$queryBuilder->expr()->isNull(
-							$join['table'] . '.hidden'
 						),
 					),
 				)

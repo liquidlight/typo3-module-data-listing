@@ -48,6 +48,8 @@ class FeUsersController extends DatatableController
 		'fe_users.email' => 'Email',
 	];
 
+	protected $moduleName = 'tx_moduledatalisting';
+
 	/**
 	 * Init view
 	 */
