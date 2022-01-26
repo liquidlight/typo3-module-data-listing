@@ -16,6 +16,7 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\PathUtility;
@@ -67,39 +68,6 @@ abstract class DatatableController extends ActionController implements Datatable
 	/**
 	 * Lookup a usergroup
 	 */
-	protected function usergroupLookup(int $uid): string
-	{
-		static $cache = [];
-
-		if (isset($cache[$uid])) {
-			return $cache[$uid];
-		}
-
-		$connection = $this->getConnection('fe_groups');
-		$queryBuilder = $connection->createQueryBuilder();
-
-		$usergroup = $queryBuilder
-			->select('title')
-			->from('fe_groups')
-			->where(
-				$queryBuilder->expr()->eq('uid', $uid)
-			)
-			->execute()
-			->fetchAll()
-		;
-
-		if (!$usergroup) {
-			return false;
-		}
-
-		$cache[$uid] = $usergroup[0]['title'];
-
-		return $cache[$uid];
-	}
-
-	/**
-	 * Lookup a usergroup
-	 */
 	protected function getHeaders(array $default): array
 	{
 		static $headers = [];
@@ -146,5 +114,294 @@ abstract class DatatableController extends ActionController implements Datatable
 		}
 
 		return null;
+	}
+
+	/**
+	 * Get the table data
+	 */
+	protected function getTableData(array $params): array
+	{
+		$connection = $this->getConnection($this->table);
+		$queryBuilder = $connection->createQueryBuilder();
+
+		/**
+		 * Users without attached fees were not returned in the count due to null values
+		 * Removing restrictions and re-apply to fe_users only solves this
+		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
+		*/
+		$queryBuilder
+			->getRestrictions()
+			->removeAll()
+		;
+
+		// Re-apply restrictions
+		$query = $queryBuilder
+			->select(...array_keys($this->getHeaders($this->headers)))
+			->from($this->table)
+			->where(
+				$queryBuilder->expr()->eq(
+					$this->table . '.deleted',
+					0
+				),
+				$queryBuilder->expr()->eq(
+					$this->table . ($this->table == 'fe_users' ? '.disable' : '.hidden'),
+					0
+				),
+			)
+		;
+
+		// Apply joins
+		$query = $this->applyJoins($queryBuilder, $query);
+
+		// Apply filters
+		if ($params['filters']) {
+			$query = $this->applyFilters($queryBuilder, $query, $params);
+		}
+
+		// Page
+		if ($params['start']) {
+			$query = $query->setFirstResult($params['start']);
+		}
+
+		// Order
+		$order = $params['order'][0];
+
+		if (isset($order['column']) && $order['dir']) {
+			$headerKeys = array_keys($this->getHeaders($this->headers));
+			$query = $query->orderBy($headerKeys[$order['column']], $order['dir']);
+		} else {
+			$query = $query->orderBy($this->table  . '.uid', 'DESC');
+		}
+
+		// Apply search
+		$query = $this->applySearch($queryBuilder, $query, $params);
+
+		// Page size
+		if ($params['length'] > 0) {
+			$query = $query
+				->setMaxResults($params['length'])
+			;
+		}
+
+		$data = $query
+			->execute()
+			->fetchAll()
+		;
+
+		return $data;
+	}
+
+	/**
+	 * Get the count of rows
+	 */
+	protected function getCount(array $params): int
+	{
+		$connection = $this->getConnection($this->table);
+		$queryBuilder = $connection->createQueryBuilder();
+
+		/**
+		 * Users without attached fees were not returned in the count due to null values
+		 * Removing restrictions and re-apply to table only solves this
+		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
+		*/
+		$queryBuilder
+		->getRestrictions()
+		->removeAll()
+		;
+
+		$query = $queryBuilder
+			->count($this->table . '.uid')
+			->from($this->table)
+			->where(
+				$queryBuilder->expr()->eq(
+					$this->table . '.deleted',
+					0
+				),
+				$queryBuilder->expr()->eq(
+					$this->table . ($this->table == 'fe_users' ? '.disable' : '.hidden'),
+					0
+				),
+			)
+		;
+
+		// Apply joins
+		$query = $this->applyJoins($queryBuilder, $query, $this->table);
+
+		// Apply filters
+		if ($params['filters']) {
+			$query = $this->applyFilters($queryBuilder, $query, $params);
+		}
+
+		// Apply search
+		$query = $this->applySearch($queryBuilder, $query, $params);
+
+		$count = $query
+			->execute()
+			->fetchColumn(0)
+		;
+
+		return (int)$count;
+	}
+
+	/**
+	 * Apply search to query
+	 */
+	protected function applySearch(QueryBuilder $queryBuilder, QueryBuilder $query, array $params): QueryBuilder
+	{
+		if ($params['search']['value']) {
+			$columnStr = $this->getModuleSettings()['searchableColumns'];
+			$searchableColumns = GeneralUtility::trimExplode(',', $columnStr);
+
+			$searchQuery = $queryBuilder->expr()->orX();
+			foreach ($searchableColumns as $field) {
+				$searchQuery->add(
+					$queryBuilder->expr()->like(
+						$field,
+						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
+					)
+				);
+			}
+
+			$query = $query->andWhere($searchQuery);
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Apply joins to query
+	 */
+	protected function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
+	{
+		$joins = $this->getModuleSettings()['joins.'];
+
+		// Apply joins from settings
+		if ($joins) {
+			foreach ($joins as $join) {
+				switch ($join['type']) {
+					case 'leftJoin':
+						$query = $query
+							->leftJoin(
+								$this->table,
+								$join['table'],
+								$join['table'],
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.' . $join['foreignIdentifier']))
+							)
+						;
+						break;
+					case 'rightJoin':
+						$query = $query
+							->rightJoin(
+								$this->table,
+								$join['table'],
+								$join['table'],
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.' . $join['foreignIdentifier']))
+							)
+						;
+						break;
+					case 'innerJoin':
+						$query = $query
+							->innerJoin(
+								$this->table,
+								$join['table'],
+								$join['table'],
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.' . $join['foreignIdentifier']))
+							)
+						;
+						break;
+				}
+			}
+		}
+
+		// Apply restrictions for joins from settings
+		if (!$joins) {
+			return $query;
+		}
+
+		foreach ($joins as $join) {
+			$query = $query
+				->where(
+					$queryBuilder->expr()->orX(
+						$queryBuilder->expr()->eq(
+							$join['table'] . '.deleted',
+							0
+						),
+						$queryBuilder->expr()->isNull(
+							$join['table'] . '.deleted'
+						),
+					),
+					$queryBuilder->expr()->orX(
+						$queryBuilder->expr()->eq(
+							$join['table'] . '.hidden',
+							0
+						),
+						$queryBuilder->expr()->isNull(
+							$join['table'] . '.hidden'
+						),
+					),
+				)
+			;
+		}
+
+		return $query;
+	}
+
+	/**
+	 * Apply filters to query
+	 */
+	protected function applyFilters(QueryBuilder $queryBuilder, QueryBuilder $query, array $params): QueryBuilder
+	{
+		foreach ($params['filters'] as $field => $filter) {
+			// If filtering by usergroup
+			// then use an IN query
+			// else use equals
+			if ((is_array($filter) && (count($filter) > 1))) {
+				foreach ($filter as $value) {
+					if ($field == 'usergroup') {
+						$query = $query
+							->andWhere(
+								$queryBuilder->expr()->orX(
+									$queryBuilder->expr()->like(
+										$field,
+										$queryBuilder->createNamedParameter($queryBuilder->escapeLikeWildcards($value) . ',%')
+									),
+									$queryBuilder->expr()->like(
+										$field,
+										$queryBuilder->createNamedParameter('%,' . $queryBuilder->escapeLikeWildcards($value) . ',%')
+									),
+									$queryBuilder->expr()->like(
+										$field,
+										$queryBuilder->createNamedParameter('%,' . $queryBuilder->escapeLikeWildcards($value))
+									)
+								),
+							)
+						;
+					} else {
+						$query = $query
+							->andWhere(
+								$queryBuilder->expr()->eq(
+									$field,
+									$queryBuilder->createNamedParameter(
+										$value
+									)
+								)
+							)
+						;
+					}
+				}
+			} else {
+				$query = $query
+					->andWhere(
+						$queryBuilder->expr()->eq(
+							$field,
+							$queryBuilder->createNamedParameter(
+								is_array($filter) ? $filter[0] : $filter
+							)
+						)
+					)
+				;
+			}
+		}
+		return $query;
 	}
 }
