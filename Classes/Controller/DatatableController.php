@@ -292,6 +292,64 @@ abstract class DatatableController extends ActionController implements Datatable
 						;
 						break;
 					case 'innerJoin':
+						// Apply many-to-many joins
+						if (substr($join['table'], -3) === '_mm') {
+
+							// Should we be using an alias for join?
+							if (array_key_exists('as', $join)) {
+								$joinTable = $join['as'];
+							} else {
+								$joinTable = $join['table'];
+							}
+
+							// Should we be using an alias for secondary?
+							if (array_key_exists('secondaryTableAs', $join)) {
+								$secondaryJoinTable = $join['secondaryTableAs'];
+							} else {
+								$secondaryJoinTable = $join['secondaryTable'];
+							}
+
+							// Do we need to apply an additional where clause to join table?
+							if (array_key_exists('secondaryWhereField', $join) && array_key_exists('secondaryWhereValue', $join)) {
+								$query = $query
+									->innerJoin(
+										$this->table,
+										$join['table'],
+										$joinTable,
+										$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.uid'))
+									)
+									->innerJoin(
+										$joinTable,
+										$join['secondaryTable'],
+										$secondaryJoinTable,
+										$queryBuilder->expr()->andX(
+											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($joinTable. '.' . $join['secondaryForeignIdentifier'])),
+											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryWhereField'], $queryBuilder->createNamedParameter($join['secondaryWhereValue']))
+										)
+									)
+								;
+								break;
+							}
+
+							// Apply mm join without additional where clause
+							$query = $query
+								->innerJoin(
+									$this->table,
+									$join['table'],
+									$joinTable,
+									$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.uid'))
+								)
+								->innerJoin(
+									$joinTable,
+									$join['secondaryTable'],
+									$secondaryJoinTable,
+									$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($join['table']. '.' . $join['secondaryForeignIdentifier']))
+								)
+							;
+							break;
+						}
+
+						// Apply standard join
 						$query = $query
 							->innerJoin(
 								$this->table,
@@ -311,6 +369,11 @@ abstract class DatatableController extends ActionController implements Datatable
 		}
 
 		foreach ($joins as $join) {
+			// Don't check the mm tables
+			if (substr($join['table'], -3) === '_mm') {
+				continue;
+			}
+
 			$query = $query
 				->where(
 					$queryBuilder->expr()->orX(
@@ -378,7 +441,7 @@ abstract class DatatableController extends ActionController implements Datatable
 						$queryBuilder->expr()->eq(
 							$field,
 							$queryBuilder->createNamedParameter(
-								is_array($filter) ? $filter[0] : $filter
+								is_array($filter) ? $queryBuilder->createNamedParameter($filter[0]) : $queryBuilder->createNamedParameter($filter)
 							)
 						)
 					)
