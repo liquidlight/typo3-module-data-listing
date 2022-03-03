@@ -164,9 +164,17 @@ abstract class DatatableController extends ActionController implements Datatable
 
 		if (isset($order['column']) && $order['dir']) {
 			$headerKeys = array_keys($this->getHeaders($this->headers));
-			$query = $query->orderBy($headerKeys[$order['column']], $order['dir']);
+
+			// Get column to order by and use alias if present
+			if (strpos($headerKeys[$order['column']], ' as ') !== false) {
+				$column = explode(' as ', $headerKeys[$order['column']])[1];
+			} else {
+				$column = $headerKeys[$order['column']];
+			}
+
+			$query = $query->orderBy($column, $order['dir']);
 		} else {
-			$query = $query->orderBy($this->table . '.uid', 'DESC');
+			$query = $query->orderBy($this->table  . '.uid', 'DESC');
 		}
 
 		// Apply search
@@ -270,14 +278,21 @@ abstract class DatatableController extends ActionController implements Datatable
 		// Apply joins from settings
 		if ($joins) {
 			foreach ($joins as $join) {
+				// Should we be using an alias for join?
+				if (array_key_exists('as', $join)) {
+					$joinTable = $join['as'];
+				} else {
+					$joinTable = $join['table'];
+				}
+
 				switch ($join['type']) {
 					case 'leftJoin':
 						$query = $query
 							->leftJoin(
 								$this->table,
 								$join['table'],
-								$join['table'],
-								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+								$joinTable,
+								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.' . $join['foreignIdentifier']))
 							)
 						;
 						break;
@@ -286,21 +301,14 @@ abstract class DatatableController extends ActionController implements Datatable
 							->rightJoin(
 								$this->table,
 								$join['table'],
-								$join['table'],
-								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+								$joinTable,
+								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.' . $join['foreignIdentifier']))
 							)
 						;
 						break;
 					case 'innerJoin':
 						// Apply many-to-many joins
 						if (substr($join['table'], -3) === '_mm') {
-
-							// Should we be using an alias for join?
-							if (array_key_exists('as', $join)) {
-								$joinTable = $join['as'];
-							} else {
-								$joinTable = $join['table'];
-							}
 
 							// Should we be using an alias for secondary?
 							if (array_key_exists('secondaryTableAs', $join)) {
@@ -316,14 +324,14 @@ abstract class DatatableController extends ActionController implements Datatable
 										$this->table,
 										$join['table'],
 										$joinTable,
-										$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.uid'))
+										$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.uid'))
 									)
 									->innerJoin(
 										$joinTable,
 										$join['secondaryTable'],
 										$secondaryJoinTable,
 										$queryBuilder->expr()->andX(
-											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($joinTable . '.' . $join['secondaryForeignIdentifier'])),
+											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($joinTable. '.' . $join['secondaryForeignIdentifier'])),
 											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryWhereField'], $queryBuilder->createNamedParameter($join['secondaryWhereValue']))
 										)
 									)
@@ -337,13 +345,13 @@ abstract class DatatableController extends ActionController implements Datatable
 									$this->table,
 									$join['table'],
 									$joinTable,
-									$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.uid'))
+									$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.uid'))
 								)
 								->innerJoin(
 									$joinTable,
 									$join['secondaryTable'],
 									$secondaryJoinTable,
-									$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($join['table'] . '.' . $join['secondaryForeignIdentifier']))
+									$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($join['table']. '.' . $join['secondaryForeignIdentifier']))
 								)
 							;
 							break;
@@ -355,7 +363,7 @@ abstract class DatatableController extends ActionController implements Datatable
 								$this->table,
 								$join['table'],
 								$join['table'],
-								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table. '.' . $join['foreignIdentifier']))
 							)
 						;
 						break;
@@ -378,11 +386,11 @@ abstract class DatatableController extends ActionController implements Datatable
 				->where(
 					$queryBuilder->expr()->orX(
 						$queryBuilder->expr()->eq(
-							$join['table'] . '.deleted',
+							$joinTable . '.deleted',
 							0
 						),
 						$queryBuilder->expr()->isNull(
-							$join['table'] . '.deleted'
+							$joinTable . '.deleted'
 						),
 					),
 				)
@@ -441,7 +449,7 @@ abstract class DatatableController extends ActionController implements Datatable
 						$queryBuilder->expr()->eq(
 							$field,
 							$queryBuilder->createNamedParameter(
-								is_array($filter) ? $queryBuilder->createNamedParameter($filter[0]) : $queryBuilder->createNamedParameter($filter)
+								is_array($filter) ? $filter[0] : $filter
 							)
 						)
 					)
