@@ -22,6 +22,7 @@ use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 
 abstract class DatatableController extends ActionController implements Datatable
 {
@@ -132,6 +133,7 @@ abstract class DatatableController extends ActionController implements Datatable
 		$queryBuilder
 			->getRestrictions()
 			->removeAll()
+			->add(GeneralUtility::makeInstance(DeletedRestriction::class))
 		;
 
 		// Re-apply restrictions
