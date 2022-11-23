@@ -98,11 +98,13 @@ class FeUsersController extends DatatableController
 			$row['uid'] = '<a href="' . $editLink . '" title="Edit record">' . $row['uid'] . '</a>';
 
 			// Lookup the usergroups and replace IDs with titles
-			$usergroups = [];
-			foreach (explode(',', $row['usergroup']) as $usergroupUid) {
-				$usergroups[] = $this->usergroupLookup($usergroupUid);
+			if (isset($row['usergroup'])) {
+				$usergroups = [];
+				foreach (explode(',', $row['usergroup']) as $usergroupUid) {
+					$usergroups[] = $this->usergroupLookup($usergroupUid);
+				}
+				$row['usergroup'] = implode(', ', $usergroups);
 			}
-			$row['usergroup'] = implode(', ', $usergroups);
 
 			$data[] = array_values($row);
 		}

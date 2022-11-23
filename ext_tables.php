@@ -36,7 +36,7 @@ if (TYPO3_MODE === 'BE') {
 		'tx_module_data_listing_feusers',
 		'bottom',
 		[
-			FeUsers::class => 'index',
+			\LiquidLight\ModuleDataListing\Controller\FeUsersController::class => 'index',
 		],
 		[
 			'access' => 'user,group',
