@@ -43,7 +43,7 @@ if (TYPO3_MODE === 'BE') {
 			'icon' => 'EXT:module_data_listing/Resources/Public/Icons/FeUsers.svg',
 			'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_feusers.xlf',
 			'navigationComponentId' => '',
-        	'inheritNavigationComponentFromMainModule' => false,
+			'inheritNavigationComponentFromMainModule' => false,
 		]
 	);
 }
