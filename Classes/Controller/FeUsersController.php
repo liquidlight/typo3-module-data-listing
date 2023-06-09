@@ -47,6 +47,20 @@ class FeUsersController extends DatatableController
 		'fe_users.last_name' => 'Last Name',
 		'fe_users.email' => 'Email',
 	];
+	
+	/**
+	 * Unix timestamp columns to be processed
+	 *
+	 * @var array
+	 */
+	protected $dateColumns = [
+		'tstamp',
+		'starttime',
+		'endtime',
+		'crdate',
+		'lastlogin',
+		'is_online',
+	];
 
 	protected $moduleName = 'tx_moduledatalisting';
 
@@ -104,6 +118,11 @@ class FeUsersController extends DatatableController
 					$usergroups[] = $this->usergroupLookup($usergroupUid);
 				}
 				$row['usergroup'] = implode(', ', $usergroups);
+			}
+			
+			// Format unix timestamp fields
+			foreach ($this->dateColumns as $dateColumn) {
+				$row[$dateColumn] = isset($row[$dateColumn]) ? date('d/m/Y H:i:s', $row[$dateColumn]) : 'N/A';
 			}
 
 			$data[] = array_values($row);
