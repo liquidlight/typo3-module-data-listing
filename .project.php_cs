@@ -14,7 +14,7 @@ $config = new PhpCsFixer\Config();
 return $config->setRules([
 		'@PSR12' => true,
 
-		'indentation_type' => false,
+		'indentation_type' => true,
 
 		'array_syntax' => ['syntax' => 'short'],
 		'concat_space' => ['spacing' => 'one'],

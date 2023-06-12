@@ -47,7 +47,7 @@ class FeUsersController extends DatatableController
 		'fe_users.last_name' => 'Last Name',
 		'fe_users.email' => 'Email',
 	];
-	
+
 	/**
 	 * Unix timestamp columns to be processed
 	 *
@@ -119,7 +119,7 @@ class FeUsersController extends DatatableController
 				}
 				$row['usergroup'] = implode(', ', $usergroups);
 			}
-			
+
 			// Format unix timestamp fields
 			foreach ($this->dateColumns as $dateColumn) {
 				$row[$dateColumn] = $row[$dateColumn] ? date('d/m/Y H:i:s', $row[$dateColumn]) : 'N/A';

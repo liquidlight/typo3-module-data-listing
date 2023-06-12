@@ -296,7 +296,7 @@ abstract class DatatableController extends ActionController implements Datatable
 								$joinTable,
 								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
 							)
-						;
+					;
 						break;
 					case 'rightJoin':
 						$query = $query
@@ -306,7 +306,7 @@ abstract class DatatableController extends ActionController implements Datatable
 								$joinTable,
 								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
 							)
-						;
+					;
 						break;
 					case 'innerJoin':
 						// Apply many-to-many joins
