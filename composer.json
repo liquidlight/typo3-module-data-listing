@@ -1,10 +1,8 @@
 {
     "name": "liquidlight/module-data-listing",
     "description": "Filterable, searchable and sortable datatables for the TYPO3 backend. Fe_users comes as default.",
-    "type": "typo3-cms-extension",
     "license": "GPL-2.0+",
-    "homepage": "https://github.com/liquidlight/module_data_listing",
-    "readme": "./README.md",
+    "type": "typo3-cms-extension",
     "keywords": [
         "TYPO3 CMS",
         "Backend",
@@ -12,6 +10,7 @@
         "fe_users",
         "Export"
     ],
+    "readme": "./README.md",
     "authors": [
         {
             "name": "Liquid Light",
@@ -23,6 +22,7 @@
             "email": "zaq@liquidlight.co.uk"
         }
     ],
+    "homepage": "https://github.com/liquidlight/module_data_listing",
     "support": {
         "issues": "https://github.com/liquidlight/module_data_listing/issues",
         "source": "https://github.com/liquidlight/module_data_listing"
