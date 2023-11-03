@@ -96,3 +96,24 @@ module.tx_moduledatalisting {
 	}
 }
 ```
+
+## Icons
+
+The Module Data Listing package comes with several pre-packaged icons you can use for your custom modules. We always welcome more additions, so if you create an icon and would like it included as standard, please create an issue or submit a PR.
+
+### Usage
+
+To use an icon, use the `iconIdentifier` from the table below when using the `registerModule` method.
+
+The `module-listing-users` icon is used with the default `tx_module_data_listing_feusers` module.
+
+### Available Icons
+
+The icons currently available are:
+
+| iconIdentifier | preview |
+|---|---|
+| `module-listing-company` | ![module-listing-company](./Resources/Public/Icons/Company.svg) |
+| `module-listing-map` | ![module-listing-mao](./Resources/Public/Icons/Map.svg) |
+| `module-listing-tools` | ![module-listing-tools](./Resources/Public/Icons/Tools.svg) |
+| `module-listing-users` | ![module-listing-users](./Resources/Public/Icons/Users.svg) |
