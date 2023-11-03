@@ -4,17 +4,16 @@ defined('TYPO3_MODE') or die();
 
 if (TYPO3_MODE === 'BE') {
 	// Create a module section
-	$paymentsBillsModuleConfiguration = [
-		'access' => 'user,group',
-		'name' => 'datalisting',
-		'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
-	];
 	\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addModule(
 		'datalisting',
 		'',
 		'',
 		'',
-		$paymentsBillsModuleConfiguration
+		[
+			'access' => 'user,group',
+			'name' => 'datalisting',
+			'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
+		]
 	);
 
 	// Display our custom module sections underneath the Web section
