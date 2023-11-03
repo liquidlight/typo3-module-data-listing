@@ -4,7 +4,6 @@ about: General task/todo
 title: ''
 labels: ''
 assignees: ''
-
 ---
 
 ### Summary of task
@@ -26,7 +25,3 @@ assignees: ''
 ### Blockers
 
 <!-- Anything blocking this (except time)? -->
-
-
-
-/label ~task

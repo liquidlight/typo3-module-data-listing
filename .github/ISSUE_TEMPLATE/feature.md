@@ -4,7 +4,6 @@ about: Plan and describe a new feature
 title: ''
 labels: enhancement
 assignees: ''
-
 ---
 
 ### Summary / problem to solve

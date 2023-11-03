@@ -4,7 +4,6 @@ about: Report a bug with the repository
 title: 'Bug: '
 labels: bug
 assignees: ''
-
 ---
 
 ### Summary
