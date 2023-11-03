@@ -110,10 +110,6 @@
 	background-image: url('/typo3/sysext/core/Resources/Public/Icons/T3Icons/actions/actions-view-paging-last.svg');
 }
 
-
-
-/* NEW STUFF */
-
 .form-inline {
 	display: grid;
 	grid-template-columns: max-content max-content;
@@ -168,10 +164,6 @@ div[id$="table_filter"] > label > input {
 	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGcgZmlsbD0iY3VycmVudENvbG9yIj48cGF0aCBkPSJNNy41ODYgOCA0LjA1IDExLjUzNmwuNzA3LjcwN0w5IDggNC43NTcgMy43NTdsLS43MDcuNzA3ek0xMCA0aDF2OGgtMXoiLz48L2c+PC9zdmc+");
 }
 
-/* div[id$="table_paginate"] {
-	display: grid;
-	grid-template-columns: repeat(5, auto);
-} */
 div[id$="table_paginate"] > span > span,
 .dataTables_paginate > span > span {
 	display: none;
@@ -184,6 +176,3 @@ div[id$="table_paginate"] > .paginate_button,
 .dataTables_paginate > .paginate_button {
 	padding: 9px 13px;
 }
-/* * {
-	background-color: skyblue;
-} */
