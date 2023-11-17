@@ -93,6 +93,9 @@ div[id$="table_length"] > label > select {
 	order: 10;
 	grid-column: span 2;
 	margin: 0;
+	-moz-appearance: auto; /* Firefox */
+    -webkit-appearance: auto; /* Safari and Chrome */
+    appearance: auto;
 }
 div[id$="table_filter"] > label > input {
 	margin: 0;
@@ -147,4 +150,15 @@ div[id$="table_paginate"] > span > .paginate_button,
 div[id$="table_paginate"] > .paginate_button,
 .dataTables_paginate > .paginate_button {
 	padding: 9px 13px;
+}
+
+table[id$='table'] > tbody > tr {
+	height: 4rem;
+}
+table[id$='table'] > tbody > tr button {
+	margin-right: 0.75rem;
+	font-size: 0.7rem;
+}
+table[id$='table'] > tbody > tr a.btn {
+	font-size: 0.7rem;
 }
