@@ -12,7 +12,7 @@ if (TYPO3_MODE === 'BE') {
 		[
 			'access' => 'user,group',
 			'name' => 'datalisting',
-			'iconIdentifier' => 'modulegroup-system',
+			'iconIdentifier' => 'modulegroup-datalisting',
 			'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
 		]
 	);

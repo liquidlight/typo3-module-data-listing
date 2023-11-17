@@ -1,6 +1,10 @@
 <?php
 
 return [
+	'modulegroup-datalisting' => [
+		'provider' => \TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider::class,
+		'source' => 'EXT:module_data_listing/Resources/Public/Icons/Modulegroup.svg',
+	],
 	'module-listing-company' => [
 		'provider' => \TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider::class,
 		'source' => 'EXT:module_data_listing/Resources/Public/Icons/Company.svg',
