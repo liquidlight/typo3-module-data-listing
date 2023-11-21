@@ -12,6 +12,7 @@ if (TYPO3_MODE === 'BE') {
 		[
 			'access' => 'user,group',
 			'name' => 'datalisting',
+			'iconIdentifier' => 'modulegroup-datalisting',
 			'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
 		]
 	);
@@ -39,7 +40,7 @@ if (TYPO3_MODE === 'BE') {
 		],
 		[
 			'access' => 'user,group',
-			'icon' => 'EXT:module_data_listing/Resources/Public/Icons/FeUsers.svg',
+			'iconIdentifier' => 'module-listing-users',
 			'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_feusers.xlf',
 			'navigationComponentId' => '',
 			'inheritNavigationComponentFromMainModule' => false,
