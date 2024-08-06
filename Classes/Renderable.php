@@ -14,8 +14,6 @@
 namespace LiquidLight\ModuleDataListing;
 
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use Psr\Http\Message\ResponseInterface;
-use Psr\Http\Message\ServerRequestInterface;
 
 interface Renderable
 {
