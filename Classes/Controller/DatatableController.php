@@ -11,7 +11,6 @@
 
 namespace LiquidLight\ModuleDataListing\Controller;
 
-use LiquidLight\ModuleDataListing\Datatable;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
@@ -24,7 +23,7 @@ use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 
-abstract class DatatableController extends ActionController implements Datatable
+abstract class DatatableController extends ActionController
 {
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
