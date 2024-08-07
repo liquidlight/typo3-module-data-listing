@@ -392,7 +392,7 @@ abstract class DatatableController extends ActionController implements Datatable
 	 */
 	protected function applyFilters(QueryBuilder $queryBuilder, QueryBuilder $query, array $params): QueryBuilder
 	{
-		foreach ($params['filters'] as $field => $filter) {
+		foreach ($params['filters'] ?? [] as $field => $filter) {
 			// If filtering by usergroup
 			// then use an IN query
 			// else use equals
