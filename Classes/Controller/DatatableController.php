@@ -237,7 +237,7 @@ abstract class DatatableController extends ActionController implements Datatable
 		$query = $this->applySearch($queryBuilder, $query, $params);
 
 		$count = $query
-			->execute()
+			->executeQuery()
 			->fetchColumn(0)
 		;
 
