@@ -288,20 +288,11 @@ abstract class DatatableController extends ActionController implements Datatable
 				$joinTable = $join['table'];
 			}
 
-			switch ($join['type']) {
+			switch ($type = $join['type']) {
 				case 'leftJoin':
-					$query = $query
-						->leftJoin(
-							$this->table,
-							$join['table'],
-							$joinTable,
-							$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-						)
-					;
-					break;
 				case 'rightJoin':
 					$query = $query
-						->rightJoin(
+						->$type(
 							$this->table,
 							$join['table'],
 							$joinTable,
