@@ -210,8 +210,8 @@ abstract class DatatableController extends ActionController implements Datatable
 		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
 		*/
 		$queryBuilder
-		->getRestrictions()
-		->removeAll()
+			->getRestrictions()
+			->removeAll()
 		;
 
 		$query = $queryBuilder
