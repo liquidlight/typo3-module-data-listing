@@ -28,15 +28,14 @@ class FeUsersController extends DatatableController
 	 * @var array
 	 * @access protected
 	 */
-	protected $table = 'fe_users';
+	protected string $table = 'fe_users';
 
 	/**
 	 * Table headers
 	 *
-	 * @var array
-	 * @access protected
+	 * @var array<string, string>
 	 */
-	protected $headers = [
+	protected array $headers = [
 		'fe_users.uid' => 'ID',
 		'fe_users.username' => 'Username',
 		'fe_users.usergroup' => 'Group',
@@ -49,9 +48,9 @@ class FeUsersController extends DatatableController
 	/**
 	 * Unix timestamp columns to be processed
 	 *
-	 * @var array
+	 * @var array<string>
 	 */
-	protected $dateColumns = [
+	protected array $dateColumns = [
 		'tstamp',
 		'starttime',
 		'endtime',
@@ -60,7 +59,12 @@ class FeUsersController extends DatatableController
 		'is_online',
 	];
 
-	protected $moduleName = 'tx_moduledatalisting';
+	/**
+	 * The modules name
+	 *
+	 * @var string
+	 */
+	protected string $moduleName = 'tx_moduledatalisting';
 
 	/**
 	 * Init view
