@@ -275,71 +275,52 @@ abstract class DatatableController extends ActionController implements Datatable
 	protected function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
 	{
 		$joins = $this->getModuleSettings()['joins.'];
+		if (!$joins) {
+			return $query;
+		}
 
 		// Apply joins from settings
-		if ($joins) {
-			foreach ($joins as $join) {
-				// Should we be using an alias for join?
-				if (array_key_exists('as', $join)) {
-					$joinTable = $join['as'];
-				} else {
-					$joinTable = $join['table'];
-				}
+		foreach ($joins as $join) {
+			// Should we be using an alias for join?
+			if (array_key_exists('as', $join)) {
+				$joinTable = $join['as'];
+			} else {
+				$joinTable = $join['table'];
+			}
 
-				switch ($join['type']) {
-					case 'leftJoin':
-						$query = $query
-							->leftJoin(
-								$this->table,
-								$join['table'],
-								$joinTable,
-								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-							)
-						;
-						break;
-					case 'rightJoin':
-						$query = $query
-							->rightJoin(
-								$this->table,
-								$join['table'],
-								$joinTable,
-								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-							)
-						;
-						break;
-					case 'innerJoin':
-						// Apply many-to-many joins
-						if (substr($join['table'], -3) === '_mm') {
-							// Should we be using an alias for secondary?
-							if (array_key_exists('secondaryTableAs', $join)) {
-								$secondaryJoinTable = $join['secondaryTableAs'];
-							} else {
-								$secondaryJoinTable = $join['secondaryTable'];
-							}
+			switch ($join['type']) {
+				case 'leftJoin':
+					$query = $query
+						->leftJoin(
+							$this->table,
+							$join['table'],
+							$joinTable,
+							$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+						)
+					;
+					break;
+				case 'rightJoin':
+					$query = $query
+						->rightJoin(
+							$this->table,
+							$join['table'],
+							$joinTable,
+							$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+						)
+					;
+					break;
+				case 'innerJoin':
+					// Apply many-to-many joins
+					if (substr($join['table'], -3) === '_mm') {
+						// Should we be using an alias for secondary?
+						if (array_key_exists('secondaryTableAs', $join)) {
+							$secondaryJoinTable = $join['secondaryTableAs'];
+						} else {
+							$secondaryJoinTable = $join['secondaryTable'];
+						}
 
-							// Do we need to apply an additional where clause to join table?
-							if (array_key_exists('secondaryWhereField', $join) && array_key_exists('secondaryWhereValue', $join)) {
-								$query = $query
-									->innerJoin(
-										$this->table,
-										$join['table'],
-										$joinTable,
-										$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.uid'))
-									)
-									->innerJoin(
-										$joinTable,
-										$join['secondaryTable'],
-										$secondaryJoinTable,
-										$queryBuilder->expr()->andX(
-											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($joinTable . '.' . $join['secondaryForeignIdentifier'])),
-											$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryWhereField'], $queryBuilder->createNamedParameter($join['secondaryWhereValue']))
-										)
-									)
-								;
-								break;
-							}
-
-							// Apply mm join without additional where clause
+						// Do we need to apply an additional where clause to join table?
+						if (array_key_exists('secondaryWhereField', $join) && array_key_exists('secondaryWhereValue', $join)) {
 							$query = $query
 								->innerJoin(
 									$this->table,
@@ -351,29 +332,44 @@ abstract class DatatableController extends ActionController implements Datatable
 									$joinTable,
 									$join['secondaryTable'],
 									$secondaryJoinTable,
-									$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($join['table'] . '.' . $join['secondaryForeignIdentifier']))
+									$queryBuilder->expr()->andX(
+										$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($joinTable . '.' . $join['secondaryForeignIdentifier'])),
+										$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryWhereField'], $queryBuilder->createNamedParameter($join['secondaryWhereValue']))
+									)
 								)
 							;
 							break;
 						}
 
-						// Apply standard join
+						// Apply mm join without additional where clause
 						$query = $query
 							->innerJoin(
 								$this->table,
 								$join['table'],
-								$join['table'],
-								$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+								$joinTable,
+								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.uid'))
+							)
+							->innerJoin(
+								$joinTable,
+								$join['secondaryTable'],
+								$secondaryJoinTable,
+								$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($join['table'] . '.' . $join['secondaryForeignIdentifier']))
 							)
 						;
 						break;
-				}
-			}
-		}
+					}
 
-		// Apply restrictions for joins from settings
-		if (!$joins) {
-			return $query;
+					// Apply standard join
+					$query = $query
+						->innerJoin(
+							$this->table,
+							$join['table'],
+							$join['table'],
+							$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
+						)
+					;
+					break;
+			}
 		}
 
 		foreach ($joins as $join) {
