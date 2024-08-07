@@ -117,7 +117,7 @@ class FeUsersController extends DatatableController
 			if (isset($row['usergroup'])) {
 				$usergroups = [];
 				foreach (explode(',', $row['usergroup']) as $usergroupUid) {
-					$usergroups[] = $this->usergroupLookup($usergroupUid);
+					$usergroups[] = $this->getUsergroupNameByUid($usergroupUid);
 				}
 				$row['usergroup'] = implode(', ', $usergroups);
 			}
@@ -175,7 +175,7 @@ class FeUsersController extends DatatableController
 	/**
 	 * Lookup a usergroup
 	 */
-	private function usergroupLookup(int $uid): string
+	private function getUsergroupNameByUid(int $uid): string
 	{
 		static $cache = [];
 
