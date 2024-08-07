@@ -175,12 +175,12 @@ class FeUsersController extends DatatableController
 	/**
 	 * Lookup a usergroup
 	 */
-	private function getUsergroupNameByUid(int $uid): string
+	private function getUsergroupNameByUid(int $usergroupUid): string
 	{
 		static $cache = [];
 
-		if (isset($cache[$uid])) {
-			return $cache[$uid];
+		if (isset($cache[$usergroupUid])) {
+			return $cache[$usergroupUid];
 		}
 
 		$connection = $this->getConnection('fe_groups');
@@ -190,7 +190,7 @@ class FeUsersController extends DatatableController
 			->select('title')
 			->from('fe_groups')
 			->where(
-				$queryBuilder->expr()->eq('uid', $uid)
+				$queryBuilder->expr()->eq('uid', $usergroupUid)
 			)
 			->execute()
 			->fetchAll()
@@ -200,8 +200,8 @@ class FeUsersController extends DatatableController
 			return false;
 		}
 
-		$cache[$uid] = $usergroup[0]['title'];
+		$cache[$usergroupUid] = $usergroup[0]['title'];
 
-		return $cache[$uid];
+		return $cache[$usergroupUid];
 	}
 }
