@@ -86,10 +86,9 @@ abstract class DatatableController extends ActionController implements Datatable
 		// Apply additional headers
 		foreach ($additional as $table => $columns) {
 			foreach ($columns as $column => $label) {
-				if (array_key_exists($table . $column, $headers)) {
-					continue;
+				if (!array_key_exists($table . $column, $headers)) {
+					$headers[$table . $column] = $label;
 				}
-				$headers[$table . $column] = $label;
 			}
 		}
 
