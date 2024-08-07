@@ -98,7 +98,7 @@ class FeUsersController extends DatatableController
 		$data = [];
 		foreach ($tableData as $row) {
 			// Build the edit link
-			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_ModuleDataListingTxModuleDataListingFeusers', []);
+			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_ModuleDataListingTxModuleDataListingFeusers');
 
 			$uriParameters = [
 				'edit' => [
