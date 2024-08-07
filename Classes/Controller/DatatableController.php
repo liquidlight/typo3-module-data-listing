@@ -396,7 +396,7 @@ abstract class DatatableController extends ActionController implements Datatable
 			// If filtering by usergroup
 			// then use an IN query
 			// else use equals
-			if ((is_array($filter) && (count($filter) > 1))) {
+			if (is_array($filter) && (count($filter) > 1)) {
 				foreach ($filter as $value) {
 					if ($field == 'usergroup') {
 						$query = $query
