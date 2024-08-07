@@ -398,7 +398,7 @@ abstract class DatatableController extends ActionController implements Datatable
 			// else use equals
 			if (is_array($filter) && (count($filter) > 1)) {
 				foreach ($filter as $value) {
-					if ($field == 'usergroup') {
+					if ($field === 'usergroup') {
 						$query = $query
 							->andWhere(
 								$queryBuilder->expr()->orX(
