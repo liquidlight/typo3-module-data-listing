@@ -151,12 +151,12 @@ abstract class DatatableController extends ActionController implements Datatable
 		$query = $this->applyJoins($queryBuilder, $query);
 
 		// Apply filters
-		if ($params['filters']) {
+		if ($params['filters'] ?? false) {
 			$query = $this->applyFilters($queryBuilder, $query, $params);
 		}
 
 		// Page
-		if ($params['start']) {
+		if ($params['start'] ?? false) {
 			$query = $query->setFirstResult($params['start']);
 		}
 
