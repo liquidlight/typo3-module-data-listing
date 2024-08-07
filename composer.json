@@ -20,6 +20,10 @@
         {
             "name": "Zaq Mughal",
             "email": "zaq@liquidlight.co.uk"
+        },
+        {
+            "name": "Garett Robson",
+            "email": "garett@liquidlight.co.uk"
         }
     ],
     "homepage": "https://github.com/liquidlight/module_data_listing",
