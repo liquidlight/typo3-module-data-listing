@@ -109,7 +109,7 @@ abstract class DatatableController extends ActionController
 			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
 		;
 
-		if ($settings = $setup['module.'][$this->moduleName . '.']['settings.']) {
+		if ($settings = $setup['module.']['tx_moduledatalisting.'][$this->moduleName . '.']['settings.']) {
 			return $settings;
 		}
 
