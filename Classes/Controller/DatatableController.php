@@ -27,7 +27,9 @@ use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 abstract class DatatableController extends ActionController
 {
 	protected string $table;
+
 	protected string $moduleName;
+
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
 	/**
@@ -79,7 +81,7 @@ abstract class DatatableController extends ActionController
 			return $headers;
 		}
 
-		if (!$additional = $this->getModuleSettings()['additionalColumns.']) {
+		if (!$additional = $this->getModuleSettings()['additionalColumns.'] ?? false) {
 			return $default;
 		}
 
@@ -112,7 +114,7 @@ abstract class DatatableController extends ActionController
 		;
 
 
-		if($moduleSettings = $setup['module.']['tx_moduledatalisting.'][$this->moduleName . '.'] ?? false){
+		if ($moduleSettings = $setup['module.']['tx_moduledatalisting.'][$this->moduleName . '.'] ?? false) {
 			return $moduleSettings['settings.'] ?? [];
 		} else {
 			throw new Exception(sprintf(
