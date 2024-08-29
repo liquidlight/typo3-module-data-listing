@@ -1,16 +1,14 @@
-module.tx_moduledatalisting {
+module.tx_moduledatalisting.configuration {
 	default {
-		settings {
-			searchableColumns =
-		}
+		searchableColumns =
 		additionalColumns {
 			# table {
 			# 	some_column = Label
 			# }
 		}
 	}
-	fe_users {
-		settings {
+	configuration{
+		tx_moduledatalisting_fe_users {
 			searchableColumns := addToList(fe_users.first_name,fe_users.last_name,fe_users.username,fe_users.email,fe_users.uid)
 		}
 	}

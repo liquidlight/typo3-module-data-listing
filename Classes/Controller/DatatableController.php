@@ -28,7 +28,7 @@ abstract class DatatableController extends ActionController
 {
 	protected string $table;
 
-	protected string $moduleName;
+	protected string $configurationName;
 
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
@@ -113,13 +113,12 @@ abstract class DatatableController extends ActionController
 			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
 		;
 
-
-		if ($moduleSettings = $setup['module.']['tx_moduledatalisting.'][$this->moduleName . '.'] ?? false) {
-			return $moduleSettings['settings.'] ?? [];
+		if ($moduleSettings = $setup['module.']['tx_moduledatalisting.']['configuration.'][$this->configurationName . '.'] ?? false) {
+			return $moduleSettings ?? [];
 		} else {
 			throw new Exception(sprintf(
-				'Missing expected SetupTS definition for module.tx_moduledatalisting.%s',
-				$this->moduleName,
+				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
+				$this->configurationName,
 			));
 		}
 
@@ -285,6 +284,7 @@ abstract class DatatableController extends ActionController
 	protected function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
 	{
 		$joins = $this->getModuleSettings()['joins.'];
+
 		if (!$joins) {
 			return $query;
 		}
