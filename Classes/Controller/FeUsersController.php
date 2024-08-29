@@ -63,7 +63,7 @@ class FeUsersController extends DatatableController
 	 *
 	 * @var string
 	 */
-	protected string $moduleName = 'tx_moduledatalisting';
+	protected string $configurationName = 'tx_moduledatalisting_fe_users';
 
 	/**
 	 * Init view

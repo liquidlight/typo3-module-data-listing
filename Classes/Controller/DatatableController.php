@@ -11,21 +11,26 @@
 
 namespace LiquidLight\ModuleDataListing\Controller;
 
-use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
-use TYPO3\CMS\Backend\View\BackendTemplateView;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Database\ConnectionPool;
+use Exception;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
+use TYPO3\CMS\Backend\View\BackendTemplateView;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 abstract class DatatableController extends ActionController
 {
+	protected string $table;
+
+	protected string $configurationName;
+
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
 	/**
@@ -77,7 +82,7 @@ abstract class DatatableController extends ActionController
 			return $headers;
 		}
 
-		if (!$additional = $this->getModuleSettings()['additionalColumns.']) {
+		if (!$additional = $this->getModuleSettings()['additionalColumns.'] ?? false) {
 			return $default;
 		}
 
@@ -109,8 +114,13 @@ abstract class DatatableController extends ActionController
 			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
 		;
 
-		if ($settings = $setup['module.']['tx_moduledatalisting.'][$this->moduleName . '.']['settings.']) {
-			return $settings;
+		if ($moduleSettings = $setup['module.']['tx_moduledatalisting.']['configuration.'][$this->configurationName . '.'] ?? false) {
+			return $moduleSettings ?? [];
+		} else {
+			throw new Exception(sprintf(
+				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
+				$this->configurationName,
+			));
 		}
 
 		return null;
@@ -275,6 +285,7 @@ abstract class DatatableController extends ActionController
 	protected function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
 	{
 		$joins = $this->getModuleSettings()['joins.'];
+
 		if (!$joins) {
 			return $query;
 		}
