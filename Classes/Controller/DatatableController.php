@@ -82,11 +82,11 @@ abstract class DatatableController extends ActionController
 			return $headers;
 		}
 
-		if (!$additional = $this->getModuleSettings()['additionalColumns.'] ?? false) {
-			return $default;
-		}
-
 		$headers = $default;
+
+		if (!$additional = $this->getModuleSettings()['additionalColumns.'] ?? false) {
+			return $headers;
+		}
 
 		// Apply additional headers
 		foreach ($additional as $table => $columns) {
