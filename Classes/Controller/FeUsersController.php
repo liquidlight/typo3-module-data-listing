@@ -165,7 +165,7 @@ class FeUsersController extends DatatableController
 	 */
 	private function getUsergroups(): array
 	{
-		$usergroups = $this->getNewQueryBuilder()
+		$usergroups = $this->getNewQueryBuilder('fe_groups')
 			->select('title', 'uid')
 			->from('fe_groups')
 			->execute()
