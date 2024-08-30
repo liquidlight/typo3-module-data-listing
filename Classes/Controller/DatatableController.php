@@ -73,10 +73,10 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Return query builder connection by table
 	 */
-	protected function getNewQueryBuilder(): QueryBuilder
+	protected function getNewQueryBuilder(?string $table = null): QueryBuilder
 	{
 		return $this->connectionPool
-			->getConnectionForTable($this->table)
+			->getConnectionForTable($table ?? $this->table)
 			->createQueryBuilder();
 		;
 	}
