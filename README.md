@@ -117,3 +117,52 @@ The icons currently available are:
 | `module-listing-map` | ![module-listing-mao](./Resources/Public/Icons/Map.svg) |
 | `module-listing-tools` | ![module-listing-tools](./Resources/Public/Icons/Tools.svg) |
 | `module-listing-users` | ![module-listing-users](./Resources/Public/Icons/Users.svg) |
+
+## Upgrading from v1 to v2
+
+There number of critical differences between v1 and v2.
+
+### Overview
+
+#### Classes `LiquidLight\ModuleDataListing\Controller\DatatableController`
+
+* Property `$table` changed to `protected string $table`
+* Property `$moduleName` changed to `protected string $configurationName`
+* Property `$headers` changed to `protected array $headers`
+* New property `protected array $columnSelectOverrides` mapls fields to complex SQL; useful for handling computed values.
+* Method `protected function getConnection(string $table): Connection` changed to `protected function getConnection(?string $table = null): Connection`. Calling without an argument uses `$this->table`.
+* Method `protected function getHeaders(array $default): array` changed to `protected function getHeaders(): array`. Uses `$this->headers` internally, which was otherwise always passed-in.
+* Method `indexAction(): void` implemented as per the old sub-class instructions. As a result you no longer need to define `indexAction()` to have default behaviour, you can alternatively call `parent::index()` to expand on the default behaviour.
+
+> [!Note]
+> Previously the `$table`, `$moduleName` and `$headers` properties where not _actually_ defined in the class, but where expected be defined by sub-classes. They are now explicitly defined in this class and may been their definitions updated in any implementing code.
+
+#### Class`LiquidLight\ModuleDataListing\Controller\FeUsersController`
+
+* Property `protected $table` changed to `protected string $table`
+* Property `protected $moduleName` changed to `protected string $configurationName`. The value of this property has also been changed to `fe_users`.
+
+#### Setup TS
+
+Previously the configuration of a datatable listing was stored in `module.[ext].settings`; essentially this would limit how many listings could be setup per-extension and stifled extensibility and clutter a key reserved for module-level settings. The values previously defined there (`joins`, `additionalColumns`, etc) have been moved to `module.tx_moduledatalisting.configuration.[configuration_name]`. This coincides with a change to `LiquidLight\ModuleDataListing\Controller\DatatableController` which has had its `$moduleName` property changes to `$configurationName`, which is used to determine which configuration to use from the ones defined in TS.
+
+The following is now the recommended SetupTS when defining your own listing.
+
+```
+module.tx_moduledatalisting {
+    configuration{
+        [configuration_name] {
+    		searchableColumns = [tablename].uid, [tablename].[field], ...
+        }
+    }
+}
+
+module.[tx_myextension] {
+    view < module.tx_moduledatalisting.view
+	view {
+		templateRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Templates/
+		layoutRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Layouts/
+		partialRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Partials/
+	}
+}
+```
