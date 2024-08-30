@@ -458,4 +458,14 @@ abstract class DatatableController extends ActionController
 		}
 		return $query;
 	}
+
+	/**
+	 * Default action: index
+	 */
+	public function indexAction(): void
+	{
+		$this->view->assignMultiple([
+			'headers' => array_values($this->getHeaders()),
+		]);
+	}
 }
