@@ -12,7 +12,6 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use Exception;
-use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -32,14 +31,15 @@ abstract class DatatableController extends ActionController
 	protected string $configurationName;
 
 	protected array $headers;
+
 	protected array $columnSelectOverrides = [];
 
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
-
 	protected ConnectionPool $connectionPool;
 
-	public function injectConnectionPool(ConnectionPool $connectionPool) {
+	public function injectConnectionPool(ConnectionPool $connectionPool)
+	{
 		$this->connectionPool = $connectionPool;
 	}
 
@@ -78,7 +78,7 @@ abstract class DatatableController extends ActionController
 	{
 		return $this->connectionPool
 			->getConnectionForTable($table ?? $this->table)
-			->createQueryBuilder();
+			->createQueryBuilder()
 		;
 	}
 
@@ -156,13 +156,13 @@ abstract class DatatableController extends ActionController
 		;
 
 		$selectFields = array_keys($this->getHeaders());
-		foreach($selectFields as $field){
-			if(isset($this->columnSelectOverrides[$field])) {
+		foreach ($selectFields as $field) {
+			if (isset($this->columnSelectOverrides[$field])) {
 				$query->addSelectLiteral(sprintf(
-						'%s as `%s`',
-						$this->columnSelectOverrides[$field],
-						$field,
-					));
+					'%s as `%s`',
+					$this->columnSelectOverrides[$field],
+					$field,
+				));
 			} else {
 				$query->addSelect($field);
 			}
