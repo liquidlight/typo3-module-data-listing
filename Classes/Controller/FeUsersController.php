@@ -148,8 +148,8 @@ class FeUsersController extends DatatableController
 	 */
 	public function indexAction(): void
 	{
+		parent::indexAction();
 		$this->view->assignMultiple([
-			'headers' => array_values($this->getHeaders()),
 			'groups' => $this->getUsergroups(),
 		]);
 	}
