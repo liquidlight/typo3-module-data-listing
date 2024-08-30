@@ -25,7 +25,6 @@ class FeUsersController extends DatatableController
 	/**
 	 * Table
 	 *
-	 * @var array
 	 * @access protected
 	 */
 	protected string $table = 'fe_users';
