@@ -165,10 +165,7 @@ class FeUsersController extends DatatableController
 	 */
 	private function getUsergroups(): array
 	{
-		$connection = $this->getConnection('fe_groups');
-		$queryBuilder = $connection->createQueryBuilder();
-
-		$usergroups = $queryBuilder
+		$usergroups = $this->getNewQueryBuilder()
 			->select('title', 'uid')
 			->from('fe_groups')
 			->execute()
@@ -189,8 +186,7 @@ class FeUsersController extends DatatableController
 			return $cache[$usergroupUid];
 		}
 
-		$connection = $this->getConnection('fe_groups');
-		$queryBuilder = $connection->createQueryBuilder();
+		$queryBuilder = $this->getNewQueryBuilder();
 
 		$usergroup = $queryBuilder
 			->select('title')
