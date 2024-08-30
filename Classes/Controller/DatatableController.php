@@ -30,6 +30,8 @@ abstract class DatatableController extends ActionController
 
 	protected string $configurationName;
 
+	protected array $headers;
+
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
 	/**
