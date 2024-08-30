@@ -76,7 +76,7 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Lookup a usergroup
 	 */
-	protected function getHeaders(array $default): array
+	protected function getHeaders(): array
 	{
 		static $headers = [];
 
@@ -84,7 +84,7 @@ abstract class DatatableController extends ActionController
 			return $headers;
 		}
 
-		$headers = $default;
+		$headers = $this->headers;
 
 		if (!$additional = $this->getModuleSettings()['additionalColumns.'] ?? false) {
 			return $headers;
@@ -149,7 +149,7 @@ abstract class DatatableController extends ActionController
 
 		// Re-apply restrictions
 		$query = $queryBuilder
-			->select(...array_keys($this->getHeaders($this->headers)))
+			->select(...array_keys($this->getHeaders()))
 			->from($this->table)
 			->where(
 				$queryBuilder->expr()->eq(
@@ -176,7 +176,7 @@ abstract class DatatableController extends ActionController
 		$order = $params['order'][0];
 
 		if (isset($order['column']) && $order['dir']) {
-			$headerKeys = array_keys($this->getHeaders($this->headers));
+			$headerKeys = array_keys($this->getHeaders());
 
 			// Get column to order by and use alias if present
 			if (strpos($headerKeys[$order['column']], ' as ') !== false) {
