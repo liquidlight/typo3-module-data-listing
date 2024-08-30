@@ -31,6 +31,7 @@ abstract class DatatableController extends ActionController
 	protected string $configurationName;
 
 	protected array $headers;
+	protected array $columnSelectOverrides = [];
 
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
@@ -146,9 +147,21 @@ abstract class DatatableController extends ActionController
 			->add(GeneralUtility::makeInstance(DeletedRestriction::class))
 		;
 
+		$selectFields = array_keys($this->getHeaders());
+		foreach($selectFields as $field){
+			if(isset($this->columnSelectOverrides[$field])) {
+				$queryBuilder->addSelectLiteral(sprintf(
+						'%s as `%s`',
+						$this->columnSelectOverrides[$field],
+						$field,
+					));
+			} else {
+				$queryBuilder->addSelect($field);
+			}
+		}
+
 		// Re-apply restrictions
 		$query = $queryBuilder
-			->select(...array_keys($this->getHeaders()))
 			->from($this->table)
 			->where(
 				$queryBuilder->expr()->eq(
