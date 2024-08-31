@@ -12,6 +12,7 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use Exception;
+use RuntimeException;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Database\ConnectionPool;
@@ -147,7 +148,7 @@ abstract class DatatableController extends ActionController
 		 * Users without attached fees were not returned in the count due to null values
 		 * Removing restrictions and re-apply to fe_users only solves this
 		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
-		*/
+		 */
 		$query
 			->getRestrictions()
 			->removeAll()
@@ -223,7 +224,7 @@ abstract class DatatableController extends ActionController
 		 * Users without attached fees were not returned in the count due to null values
 		 * Removing restrictions and re-apply to table only solves this
 		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
-		*/
+		 */
 		$query
 			->getRestrictions()
 			->removeAll()
@@ -289,115 +290,49 @@ abstract class DatatableController extends ActionController
 	 */
 	protected function applyJoins(QueryBuilder $query): QueryBuilder
 	{
-		$joins = $this->getModuleSettings()['joins.'];
+		$joins = $this->getModuleSettings()['joins.'] ?? [];
 
-		if (!$joins) {
-			return $query;
-		}
+		$typesAllowed = ['join', 'leftJoin', 'rightJoin', 'innerJoin'];
 
 		// Apply joins from settings
-		foreach ($joins as $join) {
-			// Should we be using an alias for join?
-			if (array_key_exists('as', $join)) {
-				$joinTable = $join['as'];
-			} else {
-				$joinTable = $join['table'];
+		foreach ($joins as $alias => $join) {
+
+			foreach (['table', 'type', 'on'] as $property) {
+				if (!isset($join[$property])) {
+					throw new RuntimeException(sprintf(
+						'Expected join definition %s to contain %s',
+						$alias,
+						$property
+					));
+				}
 			}
 
-			switch ($type = $join['type']) {
-				case 'leftJoin':
-				case 'rightJoin':
-					$query = $query
-						->$type(
-							$this->table,
-							$join['table'],
-							$joinTable,
-							$query->expr()->eq($joinTable . '.' . $join['localIdentifier'], $query->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-						)
-					;
-					break;
-				case 'innerJoin':
-					// Apply many-to-many joins
-					if (substr($join['table'], -3) === '_mm') {
-						// Should we be using an alias for secondary?
-						if (array_key_exists('secondaryTableAs', $join)) {
-							$secondaryJoinTable = $join['secondaryTableAs'];
-						} else {
-							$secondaryJoinTable = $join['secondaryTable'];
-						}
+			$alias = substr($alias, 0, -1); // Remove the trailing . from TS
+			$table = $join['table'];
+			$type = $join['type'];
+			$on = $join['on'];
 
-						// Do we need to apply an additional where clause to join table?
-						if (array_key_exists('secondaryWhereField', $join) && array_key_exists('secondaryWhereValue', $join)) {
-							$query = $query
-								->innerJoin(
-									$this->table,
-									$join['table'],
-									$joinTable,
-									$query->expr()->eq($joinTable . '.' . $join['localIdentifier'], $query->quoteIdentifier($this->table . '.uid'))
-								)
-								->innerJoin(
-									$joinTable,
-									$join['secondaryTable'],
-									$secondaryJoinTable,
-									$query->expr()->andX(
-										$query->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $query->quoteIdentifier($joinTable . '.' . $join['secondaryForeignIdentifier'])),
-										$query->expr()->eq($secondaryJoinTable . '.' . $join['secondaryWhereField'], $query->createNamedParameter($join['secondaryWhereValue']))
-									)
-								)
-							;
-							break;
-						}
-
-						// Apply mm join without additional where clause
-						$query = $query
-							->innerJoin(
-								$this->table,
-								$join['table'],
-								$joinTable,
-								$query->expr()->eq($joinTable . '.' . $join['localIdentifier'], $query->quoteIdentifier($this->table . '.uid'))
-							)
-							->innerJoin(
-								$joinTable,
-								$join['secondaryTable'],
-								$secondaryJoinTable,
-								$query->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $query->quoteIdentifier($join['table'] . '.' . $join['secondaryForeignIdentifier']))
-							)
-						;
-						break;
-					}
-
-					// Apply standard join
-					$query = $query
-						->innerJoin(
-							$this->table,
-							$join['table'],
-							$join['table'],
-							$query->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $query->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-						)
-					;
-					break;
-			}
-		}
-
-		foreach ($joins as $join) {
-			// Don't check the mm tables
-			if (substr($join['table'], -3) === '_mm') {
-				continue;
+			if (!in_array($type, $typesAllowed, true)) {
+				throw new RuntimeException(sprintf(
+					'Unexpected join definition %s has type of %s',
+					$alias,
+					$type,
+				));
 			}
 
-			$query = $query
-				->where(
+			// Perform the join
+			$query->$type($this->table, $table, $alias, $on);
+
+			// Exclude anything that is deleted
+			if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
+				$deleteFiled = $alias . '.' . $deleteFiled;
+				$query->where(
 					$query->expr()->orX(
-						$query->expr()->eq(
-							$joinTable . '.deleted',
-							0
-						),
-						$query->expr()->isNull(
-							$joinTable . '.deleted'
-						),
+						$query->expr()->eq($deleteFiled, 0),
+						$query->expr()->isNull($deleteFiled),
 					),
-				)
-			;
+				);
+			}
 		}
 
 		return $query;
