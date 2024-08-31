@@ -193,22 +193,7 @@ abstract class DatatableController extends ActionController
 		}
 
 		// Order
-		$order = $params['order'][0];
-
-		if (isset($order['column']) && $order['dir']) {
-			$headerKeys = array_keys($this->getHeaders());
-
-			// Get column to order by and use alias if present
-			if (strpos($headerKeys[$order['column']], ' as ') !== false) {
-				$column = explode(' as ', $headerKeys[$order['column']])[1];
-			} else {
-				$column = $headerKeys[$order['column']];
-			}
-
-			$query = $query->orderBy($column, $order['dir']);
-		} else {
-			$query = $query->orderBy($this->table . '.uid', 'DESC');
-		}
+		$this->applyOrder($query, $params);
 
 		// Apply search
 		$query = $this->applySearch($query, $params);
@@ -476,6 +461,44 @@ abstract class DatatableController extends ActionController
 			}
 		}
 		return $query;
+	}
+
+	/**
+	 *
+	 */
+	public function applyOrder(QueryBuilder $query, array $params)
+	{
+
+		$orders = $params['order'] ?? [];
+		$columnCount = count($this->getHeaders());
+
+		foreach ($orders as $order) {
+			$column = $order['column'] ?? false;
+			$dir = $order['dir'] ?? 'ASC';
+
+			if (!is_numeric($column)) {
+				continue;
+			}
+
+			$column = (int)$column;
+
+			if (!is_int($column)) {
+				continue;
+			}
+
+			if (0 > $column || $column >= $columnCount) {
+				continue;
+			}
+
+			if (!in_array(strtoupper($dir), ['ASC', 'DESC'], true)) {
+				continue;
+			}
+
+			// SQL order by columns are 1-base
+			$query->getConcreteQueryBuilder()->addOrderBy($column + 1, $dir);
+		}
+
+		return $this;
 	}
 
 	/**
