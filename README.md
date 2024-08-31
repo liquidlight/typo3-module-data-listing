@@ -135,12 +135,12 @@ There number of critical differences between v1 and v2.
 * Method `indexAction(): void` implemented as per the old sub-class instructions. As a result you no longer need to define `indexAction()` to have default behaviour, you can alternatively call `parent::index()` to expand on the default behaviour.
 
 > [!Note]
-> Previously the `$table`, `$moduleName` and `$headers` properties where not _actually_ defined in the previous version but where expected to be defined in sub-classes. They are now explicitly defined in this class. If you have previously extended `DatatableController` you will likely need to change your defitions to match.
+> Previously the `$table`, `$moduleName` and `$headers` properties where not _actually_ defined in the previous version but where expected to be defined in sub-classes. They are now explicitly defined in this class. If you have previously extended `DatatableController` you will likely need to change your definitions to match.
 
 #### Class`LiquidLight\ModuleDataListing\Controller\FeUsersController`
 
 * Property `protected $table` changed to `protected string $table`
-* Property `protected $moduleName` changed to `protected string $configurationName`. The value of this property has also been changed to `fe_users`.
+* Property `protected $moduleName` changed to `protected string $configurationName`. The value of this property has also been changed to "*fe_users_*".
 
 #### Setup TS
 
@@ -167,3 +167,6 @@ module.[tx_myextension] {
 	}
 }
 ```
+
+> [!Note]
+> The `FeUsersController` class is no longer tied to the "default" configuration, but rather its own. located in `module.tx_moduledatalisting.configuration.fe_users` it still inherits from the `module.tx_moduledatalisting.configuration.default`, as is recommended in the block above.
