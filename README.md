@@ -153,7 +153,7 @@ module.tx_moduledatalisting {
     configuration{
         [configuration_name] < .default
         [configuration_name] {
-    		searchableColumns = [tablename].uid, [tablename].[field], ...
+    		...
         }
     }
 }
@@ -170,3 +170,22 @@ module.[tx_myextension] {
 
 > [!Note]
 > The `FeUsersController` class is no longer tied to the "default" configuration, but rather its own. located in `module.tx_moduledatalisting.configuration.fe_users` it still inherits from the `module.tx_moduledatalisting.configuration.default`, as is recommended in the block above.
+
+Joins are defined and processed differently in version 2. The previous numerical index for joins has been replaced with a string key, that represents the alias of the joined table. The previous `localIdentifier` and `foreignIdentifier` keys have been simplified into a single `on` key, which defined the entire on statement.
+
+```
+module.tx_moduledatalisting {
+	configuration {
+		fe_user_groups < .fe_users
+		fe_user_groups {
+			joins {
+				fe_groups {
+					type = join
+					table = fe_groups
+					on = FIND_IN_SET(fe_groups.uid, fe_users.usergroup)
+				}
+			}
+		}
+	}
+}
+```
