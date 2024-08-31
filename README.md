@@ -122,20 +122,20 @@ The icons currently available are:
 
 There number of critical differences between v1 and v2.
 
-### Overview
+### Overview of Changes
 
 #### Classes `LiquidLight\ModuleDataListing\Controller\DatatableController`
 
-* Property `$table` changed to `protected string $table`
-* Property `$moduleName` changed to `protected string $configurationName`
-* Property `$headers` changed to `protected array $headers`
+* Changed property `$table` to `protected string $table`
+* Changed property `$moduleName` to `protected string $configurationName`
+* Changed property `$headers` to `protected array $headers`
 * New property `protected array $columnSelectOverrides` mapls fields to complex SQL; useful for handling computed values.
 * Method `protected function getConnection(string $table): Connection` changed to `protected function getConnection(?string $table = null): Connection`. Calling without an argument uses `$this->table`.
 * Method `protected function getHeaders(array $default): array` changed to `protected function getHeaders(): array`. Uses `$this->headers` internally, which was otherwise always passed-in.
 * Method `indexAction(): void` implemented as per the old sub-class instructions. As a result you no longer need to define `indexAction()` to have default behaviour, you can alternatively call `parent::index()` to expand on the default behaviour.
 
 > [!Note]
-> Previously the `$table`, `$moduleName` and `$headers` properties where not _actually_ defined in the class, but where expected be defined by sub-classes. They are now explicitly defined in this class and may been their definitions updated in any implementing code.
+> Previously the `$table`, `$moduleName` and `$headers` properties where not _actually_ defined in the previous version but where expected to be defined in sub-classes. They are now explicitly defined in this class. If you have previously extended `DatatableController` you will likely need to change your defitions to match.
 
 #### Class`LiquidLight\ModuleDataListing\Controller\FeUsersController`
 
@@ -151,6 +151,7 @@ The following is now the recommended SetupTS when defining your own listing.
 ```
 module.tx_moduledatalisting {
     configuration{
+        [configuration_name] < .default
         [configuration_name] {
     		searchableColumns = [tablename].uid, [tablename].[field], ...
         }
