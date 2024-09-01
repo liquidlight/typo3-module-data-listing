@@ -357,8 +357,16 @@ abstract class DatatableController extends ActionController
 		$columnCount = count($this->headers);
 
 		foreach ($orders as $order) {
+
+			// Prepare the directions
+			$dir = strtoupper($order['dir'] ?? 'ASC');
+
+			if (!in_array($dir, ['ASC', 'DESC'], true)) {
+				continue;
+			}
+
+			// Prepare the column index
 			$column = $order['column'] ?? false;
-			$dir = $order['dir'] ?? 'ASC';
 
 			if (!is_numeric($column)) {
 				continue;
@@ -368,17 +376,11 @@ abstract class DatatableController extends ActionController
 
 			if (!is_int($column)) {
 				continue;
-			}
-
-			if (0 > $column || $column >= $columnCount) {
+			} elseif (0 > $column || $column >= $columnCount) {
 				continue;
 			}
 
-			if (!in_array(strtoupper($dir), ['ASC', 'DESC'], true)) {
-				continue;
-			}
-
-			// SQL order by columns are 1-base
+			// Note: SQL order by column index is 1-base
 			$query->getConcreteQueryBuilder()->addOrderBy($column + 1, $dir);
 		}
 
