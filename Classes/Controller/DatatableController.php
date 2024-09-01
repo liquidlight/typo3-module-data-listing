@@ -63,14 +63,12 @@ abstract class DatatableController extends ActionController
 		$this->joins = $this->joins ?? $configuration['joins.'] ?? [];
 		$this->searchableColumns = $this->searchableColumns ?? $configuration['searchableColumns'] ?? [];
 
-		if($additionalColumns = $configuration['additionalColumns.'] ?? false) {
-			foreach ($additionalColumns as $table => $columns) {
-				foreach ($columns as $column => $label) {
-					if (array_key_exists($table . $column, $this->headers)) {
-						continue;
-					}
-					$this->headers[$table . $column] = $label;
+		foreach ($configuration['additionalColumns.'] ?? [] as $table => $columns) {
+			foreach ($columns as $column => $label) {
+				if (array_key_exists($table . $column, $this->headers)) {
+					continue;
 				}
+				$this->headers[$table . $column] = $label;
 			}
 		}
 
