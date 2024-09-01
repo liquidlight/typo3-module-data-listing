@@ -129,13 +129,13 @@ There number of critical differences between v1 and v2.
 * Changed property `$table` to `protected string $table`
 * Changed property `$moduleName` to `protected string $configurationName`
 * Changed property `$headers` to `protected array $headers`
-* New property `protected array $columnSelectOverrides` mapls fields to complex SQL; useful for handling computed values.
+* New property `protected array $columnSelectOverrides` maps fields to complex SQL; useful for handling computed values.
 * Method `protected function getConnection(string $table): Connection` changed to `protected function getConnection(?string $table = null): Connection`. Calling without an argument uses `$this->table`.
 * Method `protected function getHeaders(array $default): array` changed to `protected function getHeaders(): array`. Uses `$this->headers` internally, which was otherwise always passed-in.
 * Method `indexAction(): void` implemented as per the old sub-class instructions. As a result you no longer need to define `indexAction()` to have default behaviour, you can alternatively call `parent::index()` to expand on the default behaviour.
 
 > [!Note]
-> Previously the `$table`, `$moduleName` and `$headers` properties where not _actually_ defined in the previous version but where expected to be defined in sub-classes. They are now explicitly defined in this class. If you have previously extended `DatatableController` you will likely need to change your definitions to match.
+> Previously the `$table`, `$moduleName` and `$headers` properties where not _explicitly_ defined, but where expected to be defined in sub-classes. They are now explicitly defined in this class. If you have previously extended `DatatableController` you will likely need to change your definitions to match.
 
 #### Class`LiquidLight\ModuleDataListing\Controller\FeUsersController`
 
@@ -189,3 +189,20 @@ module.tx_moduledatalisting {
 	}
 }
 ```
+
+#### Extensibility changes
+
+In version 1 there was a number of esoteric configurations when extending `DatatableController`: the `$table` class property set the table to use, while joins where defined in typoscript; SQL select and HTML column headers were computed from `$headers` and typoscript); Fields to search where entirely handled in TS. To make these options more consistent they can now all be set in _either_ typoscript or on an extending class, and have priority respectively.
+
+The following in a breakdown of the class properties and their respective typoscript. Note that class properties are all defined in `DatatableListing` while the typoscript keys are relative to `module.tx_moduledatalisting.configuration.[configuration_name]`, where *`configuration_name`* is derived from a classes `$configurationName` property. This is the *only* place you can set the *`configuration_name`* for a class.
+
+| Class Property                 | Typoscript Key                                  | Description |
+|--------------------------------|-------------------------------------------------|-------------|
+| `string $table`                | `table = <table_name>`                          | The SQL table name. Should be present in the TCA either as a table or as part of a column's relationship. |
+| `string $searchableColumns`    | `searchableColumns = [List of searchable columns]`| Comma delimited list of table columns to perform searches using |
+| `array $headers`               | `headers.[table\.column] = [Column Header]`     | Key-value-pair mapping a table's column to it's display header; the same as `$header` property used to require. You will need to escape dots (`.`), i.e. `fe_users\.username = Username`. |
+| `array $columnSelectOverrides` | `columnSelectOverrides.[table\.column] = [SQL]` | Key-value-pair mapping a table's column to a complex SQL expression, i.e. `fe_users\.last_name = CONCAT(fe_users.last_name, ', ', fe_users.firstname)`. When set the key `headers` and `columnSelectOverrides` values become sorting hints, in the previous example sorting would be by `last_name` |
+| `array $joins`                 | `joins.[alias] { ... }`                         | As explained above in the "Setup TS" section |
+
+> [!Note]
+> When joining tables you should use the alias in place of the table name for the purposes of `searchableColumns`, `headers`, and `columnSelectOverrides`.
