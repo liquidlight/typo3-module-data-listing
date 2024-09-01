@@ -56,11 +56,11 @@ abstract class DatatableController extends ActionController
 			));
 		}
 
-		$this->table = $this->table ?? $configuration['table'];
-		$this->headers = $this->headers ?? $configuration['headers.'];
-		$this->columnSelectOverrides = $this->columnSelectOverrides ?? $configuration['columnSelectOverrides.'] ?? [];
-		$this->joins = $this->joins ?? $configuration['joins.'] ?? [];
-		$this->searchableColumns = $this->searchableColumns ?? $configuration['searchableColumns'] ?? [];
+		$this->table = $configuration['table'] ?? $this->table;
+		$this->headers = $configuration['headers.'] ?? $this->headers ?? [];
+		$this->columnSelectOverrides = $configuration['columnSelectOverrides.'] ?? $this->columnSelectOverrides ?? [];
+		$this->joins = $configuration['joins.'] ?? $this->joins ??[];
+		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? [];
 
 		foreach ($configuration['additionalColumns.'] ?? [] as $table => $columns) {
 			foreach ($columns as $column => $label) {
