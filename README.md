@@ -2,98 +2,70 @@
 
 ## Overview
 
-This package provides you with a backend datatable view of fe_users allowing you to sort, search and export your fe_users as well as filter by usergroup.
+This package provides you with the tools to quickly build backend views of tables allowing you to sort, search and export your data as well as filter by related data.
 
-By default, the following columns are shown:
-
-1. ID
-2. Username
-3. Usergroup
-4. Title
-5. First name
-6. Last name
-7. Email
-
-By default, the following columns are searchable:
-
-1. ID
-2. Username
-3. First name
-4. Last name
-5. Email
+Also provided is an example datatable listing for fe_users (`FeUsersController`) that can be filter by usergroup. `FeUsersController` by default will display the following columns; `ID`, `Username`, `Usergroup`, `Title`, `First name`, `Last name`, `Email`. The following columns are searchable: `ID`, `Username`, `First name`, `Last name`, `Email`.
 
 ## Settings
 
-There are a few different settings that can be set on a site-by-site basis via typoscript.
+There are a few different settings that can be set on a site-by-site basis via typoscript. These are stored in the following typoscript path `module.tx_moduledatalisting.configuration.[configuration_name]` where *`configuration_name`* is derived from a classes `$configurationName` property.
 
-### Joins
+### Headers
 
-It is possible to bolt on data from related tables by making use of the `module.tx_moduledatalisting.settings.joins` object where:
-1. `type` can be leftJoin, rightJoin or innerJoin
-2. `table` is the name of the related table
-3. `localIdentifier` is the unique identifier of the related table
-4. `foreignIdentifier` is the matching field in the fe_users table
+The `headers` key is a simple way to define what data is selected from the database and the associated column headers on the front-end. It contains key-value pairs where the key is a non-ambiguous field name and the value is the label of the column header.
 
-**Setup**
+Example headers;
+
 ```
-module.tx_moduledatalisting {
-	settings {
-		joins {
-			1 {
-				type = leftJoin
-				table = related_table
-				localIdentifier = uid
-				foreignIdentifier = related_table_uid
-			}
-		}
-	}
+module.tx_moduledatalisting.configuration.my_configuration {
+    headers {
+        my_table\.uid => The UID of this row
+        my_table\.title => The title
+    }
 }
 ```
 
-### Additional columns
+> [!Note]
+> The dots (`.`) must be escaped as the full value is needed to perform the SQL select, i.e. `SELECT my_table.uid, my_table.title FROM ...".
 
-It is possible to pull in additional columns from the fe_users table as well as columns from any join tables by making use of the `module.tx_moduledatalisting.settings.additionalColumns` object where:
-1. `table` is the name of the table you wish to pull the additional column from (this can be fe_users or any joined tables)
-2. `column` is the name of the column you wish to pull in
-3. `label` is the label that is used in the datatable header
+### Joins
 
-**`setup`**
+It is possible to add additional tables to join by making use of the `joins` object where:
+
+* The key is an alias for the table to use (this can, for the most part, be the name of the table being joined)
+* Values defined as follows;
+    * `type` one of `join`, `leftJoin`, `rightJoin` or `innerJoin`
+    * `table` the table to join
+    * `on` the `ON` part of the join (remember to use alias names if they differ from the table's name)
+
+Example joins;
 
 ```
-module.tx_moduledatalisting {
-	settings {
-		additionalColumns {
-			table {
-				column = label
-			}
-		}
-	}
+module.tx_moduledatalisting.configuration.my_configuration {
+    table = tx_from
+    joins {
+        tx_to_alias {
+            table = tx_to
+            type = leftJoin
+            on = tx_from.this_id = tx_to_alias.that_id
+        }
+    }
 }
 ```
 
 ### Searchable columns
 
-The default searchable columns are specified above however it is possible to add and/or remove columns from this list by making use of the `module.tx_moduledatalisting.settings.searchableColumns` object where:
-1. `table` is the name of the table you wish to pull the searchable column from (this can be fe_users or any joined tables)
-2. `column` is the name of the column you wish to make searchable
+Datatable listings provide a search box which can be configured to search only a specific set of field. Which fields can be searched is controlled by the `searchableColumns` property, which contains a comma delimited list of fields. You can mutate this value using the typoscript native list functions (`addToList`, .`removeFromList`, etc).
 
-**`setup`**
-
+Example searchableColumns;
 ```
-module.tx_moduledatalisting {
-	settings {
-		searchableColumns := addToList(table.column1,table.column2)
-		searchableColumns := removeFromList(table.column3)
-	}
-}
-```
-
-It is also possible to completely reset the searchable columns:
-```
-module.tx_moduledatalisting {
-	settings {
-		searchableColumns = table.column1,table.column2
-	}
+module.tx_moduledatalisting.configuration.my_configuration {
+    # Explicitly set the columns
+    searchableColumns = table.column1,table.column2
+    # Append additional columns
+    searchableColumns = addToList(table.column3,table.column4)
+    # Remove columns
+    searchableColumns = addToList(table.column2,table.column3)
 }
 ```
 
@@ -200,8 +172,8 @@ The following in a breakdown of the class properties and their respective typosc
 |--------------------------------|-------------------------------------------------|-------------|
 | `string $table`                | `table = <table_name>`                          | The SQL table name. Should be present in the TCA either as a table or as part of a column's relationship. |
 | `string $searchableColumns`    | `searchableColumns = [List of searchable columns]`| Comma delimited list of table columns to perform searches using |
-| `array $headers`               | `headers.[table\.column] = [Column Header]`     | Key-value-pair mapping a table's column to it's display header; the same as `$header` property used to require. You will need to escape dots (`.`), i.e. `fe_users\.username = Username`. |
-| `array $columnSelectOverrides` | `columnSelectOverrides.[table\.column] = [SQL]` | Key-value-pair mapping a table's column to a complex SQL expression, i.e. `fe_users\.last_name = CONCAT(fe_users.last_name, ', ', fe_users.firstname)`. When set the key `headers` and `columnSelectOverrides` values become sorting hints, in the previous example sorting would be by `last_name` |
+| `array $headers`               | `headers.[table\.column] = [Column Header]`     | Key-value pair mapping a table's column to it's display header; the same as  where the key is a non-ambiguious `$header` property used to require. You will need to escape dots (`.`), i.e. `fe_users\.username = Username`. |
+| `array $columnSelectOverrides` | `columnSelectOverrides.[table\.column] = [SQL]` | Key-value pair mapping a table's column to a complex SQL expression, i.e.  where the key is a non-ambiguious `fe_users\.last_name = CONCAT(fe_users.last_name, ', ', fe_users.firstname)`. When set the key `headers` and `columnSelectOverrides` values become sorting hints, in the previous example sorting would be by `last_name` |
 | `array $joins`                 | `joins.[alias] { ... }`                         | As explained above in the "Setup TS" section |
 
 > [!Note]
