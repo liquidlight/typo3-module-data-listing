@@ -166,10 +166,6 @@ abstract class DatatableController extends ActionController
 				$query->addSelect($field);
 			}
 		}
-		// Apply filters
-		if ($params['filters'] ?? false) {
-			$query = $this->applyFilters($query, $params);
-		}
 
 		// Page
 		if ($params['start'] ?? false) {
