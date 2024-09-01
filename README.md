@@ -164,7 +164,7 @@ module.tx_moduledatalisting {
 
 #### Extensibility changes
 
-In version 1 there was a number of esoteric configurations when extending `DatatableController`: the `$table` class property set the table to use, while joins where defined in typoscript; SQL select and HTML column headers were computed from `$headers` and typoscript); Fields to search where entirely handled in TS. To make these options more consistent they can now all be set in _either_ typoscript or on an extending class, and have priority respectively.
+In version 1 there was a number of esoteric configurations when extending `DatatableController`: the `$table` class property set the table to use, while joins where defined in typoscript; SQL select and HTML column headers were computed from `$headers` and typoscript; Fields to search where entirely handled in TS. To make these options more consistent they can now all be set in _either_ typoscript or on an extending class, and have priority respectively.
 
 The following in a breakdown of the class properties and their respective typoscript. Note that class properties are all defined in `DatatableListing` while the typoscript keys are relative to `module.tx_moduledatalisting.configuration.[configuration_name]`, where *`configuration_name`* is derived from a classes `$configurationName` property. This is the *only* place you can set the *`configuration_name`* for a class.
 
