@@ -118,6 +118,8 @@ abstract class DatatableController extends ActionController
 	{
 		$query = $this->getNewQueryBuilder();
 
+		$query->from($this->table);
+
 		$query
 			->getRestrictions()
 			->removeAll()
