@@ -170,7 +170,7 @@ abstract class DatatableController extends ActionController
 
 		// Page
 		if ($params['start'] ?? false) {
-			$query = $query->setFirstResult($params['start']);
+			$query->setFirstResult($params['start']);
 		}
 
 		// Order
@@ -178,7 +178,7 @@ abstract class DatatableController extends ActionController
 
 		// Page size
 		if ($params['length'] > 0) {
-			$query = $query
+			$query
 				->setMaxResults($params['length'])
 			;
 		}
@@ -226,7 +226,7 @@ abstract class DatatableController extends ActionController
 				);
 			}
 
-			$query = $query->andWhere($searchQuery);
+			$query->andWhere($searchQuery);
 		}
 
 		return $query;
@@ -297,7 +297,7 @@ abstract class DatatableController extends ActionController
 			if (is_array($filter) && (count($filter) > 1)) {
 				foreach ($filter as $value) {
 					if ($field === 'usergroup') {
-						$query = $query
+						$query
 							->andWhere(
 								$query->expr()->orX(
 									$query->expr()->like(
@@ -316,7 +316,7 @@ abstract class DatatableController extends ActionController
 							)
 						;
 					} else {
-						$query = $query
+						$query
 							->andWhere(
 								$query->expr()->eq(
 									$field,
@@ -329,7 +329,7 @@ abstract class DatatableController extends ActionController
 					}
 				}
 			} else {
-				$query = $query
+				$query
 					->andWhere(
 						$query->expr()->eq(
 							$field,
