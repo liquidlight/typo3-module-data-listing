@@ -26,21 +26,53 @@ use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 abstract class DatatableController extends ActionController
 {
-	protected string $table;
-
 	protected string $configurationName;
+
+	protected string $table;
 
 	protected array $headers;
 
-	protected array $columnSelectOverrides = [];
+	protected array $columnSelectOverrides;
+
+	protected string $searchableColumns;
+
+	protected array $joins;
 
 	protected $defaultViewObjectName = BackendTemplateView::class;
 
 	protected ConnectionPool $connectionPool;
 
-	public function injectConnectionPool(ConnectionPool $connectionPool)
-	{
+	public function __construct(ConfigurationManagerInterface $configurationManagerInterface, ConnectionPool $connectionPool) {
 		$this->connectionPool = $connectionPool;
+
+		$setup = $configurationManagerInterface->getConfiguration(
+			ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
+		);
+
+		if (!$configuration = $setup['module.']['tx_moduledatalisting.']['configuration.'][$this->configurationName . '.'] ?? false) {
+			throw new Exception(sprintf(
+				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
+				$this->configurationName,
+			));
+		}
+
+		$this->table = $this->table ?? $configuration['table'];
+		$this->headers = $this->headers ?? $configuration['headers.'];
+		$this->columnSelectOverrides = $this->columnSelectOverrides ?? $configuration['columnSelectOverrides.'] ?? [];
+		$this->joins = $this->joins ?? $configuration['joins.'] ?? [];
+		$this->searchableColumns = $this->searchableColumns ?? $configuration['searchableColumns'] ?? [];
+
+		if($additionalColumns = $configuration['additionalColumns.'] ?? false) {
+			foreach ($additionalColumns as $table => $columns) {
+				foreach ($columns as $column => $label) {
+					if (array_key_exists($table . $column, $this->headers)) {
+						continue;
+					}
+					$this->headers[$table . $column] = $label;
+				}
+			}
+		}
+
 	}
 
 	/**
@@ -83,61 +115,6 @@ abstract class DatatableController extends ActionController
 	}
 
 	/**
-	 * Lookup a usergroup
-	 */
-	protected function getHeaders(): array
-	{
-		static $headers = [];
-
-		if (count($headers)) {
-			return $headers;
-		}
-
-		$headers = $this->headers;
-
-		if (!$additional = $this->getModuleSettings()['additionalColumns.'] ?? false) {
-			return $headers;
-		}
-
-		// Apply additional headers
-		foreach ($additional as $table => $columns) {
-			foreach ($columns as $column => $label) {
-				if (!array_key_exists($table . $column, $headers)) {
-					$headers[$table . $column] = $label;
-				}
-			}
-		}
-
-		return $headers;
-	}
-
-	protected function getModuleSettings(): ?array
-	{
-		static $settings = [];
-
-		if (count($settings)) {
-			return $settings;
-		}
-
-		// Load module settings
-		$setup = GeneralUtility::makeInstance(ObjectManager::class)
-			->get(ConfigurationManagerInterface::class)
-			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
-		;
-
-		if ($moduleSettings = $setup['module.']['tx_moduledatalisting.']['configuration.'][$this->configurationName . '.'] ?? false) {
-			return $moduleSettings ?? [];
-		} else {
-			throw new Exception(sprintf(
-				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
-				$this->configurationName,
-			));
-		}
-
-		return null;
-	}
-
-	/**
 	 * Get the table data
 	 */
 	protected function getTableData(array $params): array
@@ -155,7 +132,7 @@ abstract class DatatableController extends ActionController
 			->add(GeneralUtility::makeInstance(DeletedRestriction::class))
 		;
 
-		$selectFields = array_keys($this->getHeaders());
+		$selectFields = array_keys($this->headers);
 		foreach ($selectFields as $field) {
 			if (isset($this->columnSelectOverrides[$field])) {
 				$query->addSelectLiteral(sprintf(
@@ -266,8 +243,7 @@ abstract class DatatableController extends ActionController
 	protected function applySearch(QueryBuilder $query, array $params): QueryBuilder
 	{
 		if ($params['search']['value']) {
-			$columnStr = $this->getModuleSettings()['searchableColumns'];
-			$searchableColumns = GeneralUtility::trimExplode(',', $columnStr);
+			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns);
 
 			$searchQuery = $query->expr()->orX();
 			foreach ($searchableColumns as $field) {
@@ -290,7 +266,7 @@ abstract class DatatableController extends ActionController
 	 */
 	protected function applyJoins(QueryBuilder $query): QueryBuilder
 	{
-		$joins = $this->getModuleSettings()['joins.'] ?? [];
+		$joins = $this->joins ?? [];
 
 		$typesAllowed = ['join', 'leftJoin', 'rightJoin', 'innerJoin'];
 
@@ -404,7 +380,7 @@ abstract class DatatableController extends ActionController
 	{
 
 		$orders = $params['order'] ?? [];
-		$columnCount = count($this->getHeaders());
+		$columnCount = count($this->headers);
 
 		foreach ($orders as $order) {
 			$column = $order['column'] ?? false;
@@ -441,7 +417,7 @@ abstract class DatatableController extends ActionController
 	public function indexAction(): void
 	{
 		$this->view->assignMultiple([
-			'headers' => array_values($this->getHeaders()),
+			'headers' => array_values($this->headers),
 		]);
 	}
 }
