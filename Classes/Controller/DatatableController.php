@@ -43,7 +43,8 @@ abstract class DatatableController extends ActionController
 
 	protected ConnectionPool $connectionPool;
 
-	public function __construct(ConfigurationManagerInterface $configurationManagerInterface, ConnectionPool $connectionPool) {
+	public function __construct(ConfigurationManagerInterface $configurationManagerInterface, ConnectionPool $connectionPool)
+	{
 		$this->connectionPool = $connectionPool;
 
 		$setup = $configurationManagerInterface->getConfiguration(
@@ -60,7 +61,7 @@ abstract class DatatableController extends ActionController
 		$this->table = $configuration['table'] ?? $this->table;
 		$this->headers = $configuration['headers.'] ?? $this->headers ?? [];
 		$this->columnSelectOverrides = $configuration['columnSelectOverrides.'] ?? $this->columnSelectOverrides ?? [];
-		$this->joins = $configuration['joins.'] ?? $this->joins ??[];
+		$this->joins = $configuration['joins.'] ?? $this->joins ?? [];
 		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? [];
 
 		foreach ($configuration['additionalColumns.'] ?? [] as $table => $columns) {
@@ -113,23 +114,46 @@ abstract class DatatableController extends ActionController
 		;
 	}
 
-	/**
-	 * Get the table data
-	 */
-	protected function getTableData(array $params): array
+	protected function prepareQuery(array $params): QueryBuilder
 	{
 		$query = $this->getNewQueryBuilder();
 
-		/**
-		 * Users without attached fees were not returned in the count due to null values
-		 * Removing restrictions and re-apply to fe_users only solves this
-		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
-		 */
 		$query
 			->getRestrictions()
 			->removeAll()
 			->add(GeneralUtility::makeInstance(DeletedRestriction::class))
 		;
+
+		// Re-apply restrictions
+		$query
+			->from($this->table)
+			->where(
+				$query->expr()->eq(
+					$this->table . '.deleted',
+					0
+				),
+			)
+		;
+
+		$query = $this->applyJoins($query, $query);
+
+		// Apply filters
+		if ($params['filters'] ?? false) {
+			$query = $this->applyFilters($query, $params);
+		}
+
+		// Apply search
+		$query = $this->applySearch($query, $params);
+
+		return $query;
+	}
+
+	/**
+	 * Get the table data
+	 */
+	protected function getTableData(array $params): array
+	{
+		$query = $this->prepareQuery($params);
 
 		$selectFields = array_keys($this->headers);
 		foreach ($selectFields as $field) {
@@ -143,21 +167,6 @@ abstract class DatatableController extends ActionController
 				$query->addSelect($field);
 			}
 		}
-
-		// Re-apply restrictions
-		$query
-			->from($this->table)
-			->where(
-				$query->expr()->eq(
-					$this->table . '.deleted',
-					0
-				),
-			)
-		;
-
-		// Apply joins
-		$query = $this->applyJoins($query, $query);
-
 		// Apply filters
 		if ($params['filters'] ?? false) {
 			$query = $this->applyFilters($query, $params);
@@ -170,9 +179,6 @@ abstract class DatatableController extends ActionController
 
 		// Order
 		$this->applyOrder($query, $params);
-
-		// Apply search
-		$query = $this->applySearch($query, $params);
 
 		// Page size
 		if ($params['length'] > 0) {
@@ -194,39 +200,9 @@ abstract class DatatableController extends ActionController
 	 */
 	protected function getCount(array $params): int
 	{
-		$query = $this->getNewQueryBuilder();
+		$query = $this->prepareQuery($params);
 
-		/**
-		 * Users without attached fees were not returned in the count due to null values
-		 * Removing restrictions and re-apply to table only solves this
-		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
-		 */
-		$query
-			->getRestrictions()
-			->removeAll()
-		;
-
-		$query = $query
-			->count($this->table . '.uid')
-			->from($this->table)
-			->where(
-				$query->expr()->eq(
-					$this->table . '.deleted',
-					0
-				),
-			)
-		;
-
-		// Apply joins
-		$query = $this->applyJoins($query, $this->table);
-
-		// Apply filters
-		if ($params['filters']) {
-			$query = $this->applyFilters($query, $params);
-		}
-
-		// Apply search
-		$query = $this->applySearch($query, $params);
+		$query->count($this->table . '.uid');
 
 		$count = $query
 			->executeQuery()
