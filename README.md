@@ -42,12 +42,12 @@ Example joins;
 
 ```
 module.tx_moduledatalisting.configuration.my_configuration {
-    table = tx_from
+    table = tx_my_table
     joins {
-        tx_to_alias {
-            table = tx_to
+        tx_my_alias {
+            table = tx_my_second_table
             type = leftJoin
-            on = tx_from.this_id = tx_to_alias.that_id
+            on = tx_my_table.this_id = tx_my_alias.that_id
         }
     }
 }
@@ -55,7 +55,7 @@ module.tx_moduledatalisting.configuration.my_configuration {
 
 ### Searchable columns
 
-Datatable listings provide a search box which can be configured to search only a specific set of field. Which fields can be searched is controlled by the `searchableColumns` property, which contains a comma delimited list of fields. You can mutate this value using the typoscript native list functions (`addToList`, .`removeFromList`, etc).
+Datatable listings provide a search box which can be configured to search only a specific set of field. Which fields can be searched is controlled by the `searchableColumns` property, which contains a comma delimited list of fields. You can mutate this value using typoscript's [value modification functions](https://docs.typo3.org/m/typo3/reference-coreapi/main/en-us/Configuration/TypoScript/Syntax/Operators/Index.html#typoscript-syntax-syntax-value-modification).
 
 Example searchableColumns;
 ```
@@ -112,7 +112,7 @@ There number of critical differences between v1 and v2.
 #### Class`LiquidLight\ModuleDataListing\Controller\FeUsersController`
 
 * Property `protected $table` changed to `protected string $table`
-* Property `protected $moduleName` changed to `protected string $configurationName`. The value of this property has also been changed to "*fe_users_*".
+* Property `protected $moduleName` changed to `protected string $configurationName`. The value of this property has also been changed to "*fe_users*".
 
 #### Setup TS
 
