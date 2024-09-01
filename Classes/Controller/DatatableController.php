@@ -127,15 +127,7 @@ abstract class DatatableController extends ActionController
 		;
 
 		// Re-apply restrictions
-		$query
-			->from($this->table)
-			->where(
-				$query->expr()->eq(
-					$this->table . '.deleted',
-					0
-				),
-			)
-		;
+		$this->applyDeleteFilter($query, $this->table, $this->table);
 
 		$query = $this->applyJoins($query, $query);
 
@@ -272,19 +264,24 @@ abstract class DatatableController extends ActionController
 			// Perform the join
 			$query->$type($this->table, $table, $alias, $on);
 
-			// Exclude anything that is deleted
-			if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
-				$deleteFiled = $alias . '.' . $deleteFiled;
-				$query->where(
-					$query->expr()->orX(
-						$query->expr()->eq($deleteFiled, 0),
-						$query->expr()->isNull($deleteFiled),
-					),
-				);
-			}
+			$this->applyDeleteFilter($query, $table, $alias);
 		}
 
 		return $query;
+	}
+
+	protected function applyDeleteFilter(QueryBuilder $query, string $table, string $alias, bool $restrict = true)
+	{
+		// Exclude anything that is deleted
+		if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
+			$deleteFiled = $alias . '.' . $deleteFiled;
+			$query->where(
+				$query->expr()->orX(
+					$query->expr()->eq($deleteFiled, 0),
+					$query->expr()->isNull($deleteFiled),
+				),
+			);
+		}
 	}
 
 	/**
