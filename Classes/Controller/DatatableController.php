@@ -127,17 +127,12 @@ abstract class DatatableController extends ActionController
 		;
 
 		// Re-apply restrictions
-		$this->applyDeleteFilter($query, $this->table, $this->table);
-
-		$query = $this->applyJoins($query, $query);
-
-		// Apply filters
-		if ($params['filters'] ?? false) {
-			$query = $this->applyFilters($query, $params);
-		}
-
-		// Apply search
-		$query = $this->applySearch($query, $params);
+		$this
+			->applyDeleteFilter($query, $this->table, $this->table)
+			->applyJoins($query, $query)
+			->applyFilters($query, $params)
+			->applySearch($query, $params)
+		;
 
 		return $query;
 	}
@@ -205,7 +200,7 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Apply search to query
 	 */
-	protected function applySearch(QueryBuilder $query, array $params): QueryBuilder
+	protected function applySearch(QueryBuilder $query, array $params): self
 	{
 		if ($params['search']['value']) {
 			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns);
@@ -223,13 +218,13 @@ abstract class DatatableController extends ActionController
 			$query->andWhere($searchQuery);
 		}
 
-		return $query;
+		return $this;
 	}
 
 	/**
 	 * Apply joins to query
 	 */
-	protected function applyJoins(QueryBuilder $query): QueryBuilder
+	protected function applyJoins(QueryBuilder $query): self
 	{
 		$joins = $this->joins ?? [];
 
@@ -267,10 +262,10 @@ abstract class DatatableController extends ActionController
 			$this->applyDeleteFilter($query, $table, $alias);
 		}
 
-		return $query;
+		return $this;
 	}
 
-	protected function applyDeleteFilter(QueryBuilder $query, string $table, string $alias, bool $restrict = true)
+	protected function applyDeleteFilter(QueryBuilder $query, string $table, string $alias, bool $restrict = true): self
 	{
 		// Exclude anything that is deleted
 		if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
@@ -282,12 +277,14 @@ abstract class DatatableController extends ActionController
 				),
 			);
 		}
+
+		return $this;
 	}
 
 	/**
 	 * Apply filters to query
 	 */
-	protected function applyFilters(QueryBuilder $query, array $params): QueryBuilder
+	protected function applyFilters(QueryBuilder $query, array $params): self
 	{
 		foreach ($params['filters'] ?? [] as $field => $filter) {
 			// If filtering by usergroup
@@ -340,7 +337,7 @@ abstract class DatatableController extends ActionController
 				;
 			}
 		}
-		return $query;
+		return $this;
 	}
 
 	/**
