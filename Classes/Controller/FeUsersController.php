@@ -129,7 +129,7 @@ class FeUsersController extends DatatableController
 
 			// Format unix timestamp fields
 			foreach ($this->dateColumns as $dateColumn) {
-				$row[$dateColumn] = $row[$dateColumn] ? date('d/m/Y H:i:s', $row[$dateColumn]) : 'N/A';
+				$row[$dateColumn] = (isset($row[$dateColumn]) && $row[$dateColumn]) ? date('d/m/Y H:i:s', $row[$dateColumn]) : 'N/A';
 			}
 
 			$data[] = array_values($row);
