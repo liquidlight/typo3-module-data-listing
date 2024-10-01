@@ -10,10 +10,18 @@ define([
 ], function () {
 	var ModuleDataListing = {
 		settings: {
-			ajaxUrlKey: '',
+			// The URL called when updating the datatable
+			ajaxUrl: '',
+			// If set, localStorage is used for rembering filters
+			storageKey: null,
+			// jQuery selector of your datatable
 			tableSelector: '#mdl-datatable',
-			searchButtonSelector: '.mdl-search',
+			// jQuery selector of button for filtering
+			filterButtonSelector: '.mdl-filter-search',
+			// jQuery selector of button for clearing filters
+			clearButtonSelector: '.mdl-filter-clear',
 
+			// DataTable options
 			dataTable: {
 				processing: true,
 				serverSide: true,
@@ -62,84 +70,210 @@ define([
 			}
 		},
 
+		// Setting config - merges options
 		config: function(options = {}) {
-			ModuleDataListing.settings = Object.assign({}, ModuleDataListing.settings, options);
+			ModuleDataListing.settings = ModuleDataListing.utility.mergeObjects(ModuleDataListing.settings, options);
 		}
 	};
 
-	ModuleDataListing.local = {
+	/**
+	 * Local Storage
+	 *
+	 * Only works if `storageKey` is set.
+	 *
+	 * Everything is stored in a single JSON object keyed by
+	 * ModuleDataListing.${settings.storageKey}
+	 */
+	ModuleDataListing.storage = {
+
+		/**
+		 * Get an item from localStorage
+		 */
 		get: function(key) {
-			let storage = localStorage.getItem('ModuleDataListing');
-			storage = JSON.parse(storage);
+			if (!ModuleDataListing.settings.storageKey) {
+				return null;
+			}
 
-			return storage[key];
+			let storage = localStorage.getItem(
+				'ModuleDataListing.' + ModuleDataListing.settings.storageKey
+			);
+			storage = storage ? JSON.parse(storage) : {};
+
+			return storage.hasOwnProperty(key) ? storage[key] : null;
 		},
-		set: function(key, data) {
-			let storage = localStorage.getItem('ModuleDataListing') ?? '';
-			storage = JSON.parse(storage);
 
+		/**
+		 * Add an item to localStorage
+		 */
+		set: function(key, data) {
+			if (!ModuleDataListing.settings.storageKey) {
+				return;
+			}
+
+			// Load existing storage
+			let storage = localStorage.getItem(
+				'ModuleDataListing.' + ModuleDataListing.settings.storageKey
+			);
+
+			storage = storage ? JSON.parse(storage) : {};
+
+			// Add our new data
 			storage[key] = data;
 
-			localStorage.setItem('ModuleDataListing', JSON.stringify(storage));
+			// Store it
+			localStorage.setItem(
+				'ModuleDataListing.' + ModuleDataListing.settings.storageKey,
+				JSON.stringify(storage)
+			);
 		},
+
+		/**
+		 * Empty the localsotrage for this storage key
+		 */
+		clear: function() {
+			localStorage.removeItem(
+				'ModuleDataListing.' + ModuleDataListing.settings.storageKey
+			)
+		}
 	}
 
+	/**
+	 * DataTable functions
+	 *
+	 * Uses https://datatables.net/
+	 */
 	ModuleDataListing.dataTable = {
-		init: function(filters) {
+		init: function(filters = null) {
+
+			// See if we can get filters from storage
+			if(!filters) {
+				filters = ModuleDataListing.storage.get('filters');
+			}
+
+			// Add the dynamic options
 			const settings = {
 				search: {
-					search: ''
+					search: ModuleDataListing.storage.get('keywords')
 				},
+
 				ajax: {
-					url: TYPO3.settings.ajaxUrls[ModuleDataListing.settings.ajaxUrlKey],
+					url: ModuleDataListing.settings.ajaxUrl,
 					data: {
 						filters: filters
 					}
 				},
 			}
+
+			// Initialise the datatable
 			const table = $(ModuleDataListing.settings.tableSelector)
 				.DataTable(
-					Object.assign({}, ModuleDataListing.settings.dataTable, settings)
+					ModuleDataListing.utility.mergeObjects(ModuleDataListing.settings.dataTable, settings)
 				);
 
+			// Add listener for search box to update storage
 			table.on('search.dt', function () {
-				// // Get the current URL
-				// let url = new URL(window.location);
-				// url.searchParams.set('search', table.search());
-				// window.history.pushState({}, '', url);
+				ModuleDataListing.storage.set('keywords', table.search());
 			});
 
 			return table;
 		},
 
+		// Remove datatable config
 		destroy: function() {
 			$(ModuleDataListing.settings.tableSelector).DataTable().destroy();
 		},
 
-		restart: function(filters) {
+		restart: function(filters = null) {
 			ModuleDataListing.dataTable.destroy();
 			ModuleDataListing.dataTable.init(filters);
 		}
 	};
 
+	/**
+	 * Filter
+	 */
 	ModuleDataListing.filters = {
+		// Filter setup
 		init: function () {
-			$(ModuleDataListing.settings.searchButtonSelector).click(function () {
-				let filters = {}
 
-				$('div[data-mdl-filter]').each(function () {
-					let self = $(this);
-					let filterData = [];
+			// Set any filters from storage
+			ModuleDataListing.filters.set(
+				ModuleDataListing.storage.get('filters')
+			);
 
-					self.find('input:checked').each(function () {
-						filterData.push($(this).val());
-					});
-
-					filters[self.data('mdl-filter')] = filterData;
-				});
-
+			// Add click listener to search button
+			$(ModuleDataListing.settings.filterButtonSelector).click(function () {
+				let filters = ModuleDataListing.filters.get();
+				ModuleDataListing.storage.set('filters', filters);
 				ModuleDataListing.dataTable.restart(filters);
 			});
+
+			// Remove all filters when cleared
+			$(ModuleDataListing.settings.clearButtonSelector).click(function () {
+				ModuleDataListing.storage.clear();
+				ModuleDataListing.filters.clear();
+				ModuleDataListing.dataTable.restart({});
+			});
+		},
+
+		/**
+		 * Get an object & array of checked items
+		 */
+		get: function () {
+			let filters = {};
+
+			$('div[data-mdl-filter]').each(function () {
+				let self = $(this);
+				let filterData = [];
+
+				self.find('input:checked').each(function () {
+					filterData.push($(this).val());
+				});
+
+				filters[self.data('mdl-filter')] = filterData;
+			});
+
+			return filters;
+		},
+
+		/**
+		 * Check any checkbox which were in the filters object
+		 */
+		set: function (filters = {}) {
+			for (let filter in filters) {
+				let container = $(`div[data-mdl-filter="${filter}"]`);
+				for (let value of filters[filter]) {
+					container.find(`input[value="${value}"]`).prop('checked', true);
+				}
+			}
+		},
+
+		/**
+		 * Uncheck all checkboxes
+		 */
+		clear: function () {
+			$('div[data-mdl-filter] input:checked').each(function() {
+				$(this).prop('checked', false);
+			})
+		},
+	}
+
+	ModuleDataListing.utility = {
+		// Filter setup
+		mergeObjects: function (obj1, obj2) {
+			const result = JSON.parse(JSON.stringify(obj1));
+
+			for (let key in obj2) {
+				if (obj2[key] instanceof Array && obj1[key] instanceof Array) {
+					result[key] = obj2[key];
+				} else if (obj2[key] instanceof Object && obj1[key] instanceof Object) {
+					result[key] = ModuleDataListing.utility.mergeObjects(obj1[key], obj2[key]);
+				} else {
+					result[key] = obj2[key];
+				}
+			}
+
+			return result;
 		}
 	}
 
