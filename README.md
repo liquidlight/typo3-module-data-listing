@@ -6,6 +6,12 @@ This package provides you with the tools to quickly build backend views of table
 
 Also provided is an example datatable listing for fe_users (`FeUsersController`) that can be filter by usergroup. `FeUsersController` by default will display the following columns; `ID`, `Username`, `Usergroup`, `Title`, `First name`, `Last name`, `Email`. The following columns are searchable: `ID`, `Username`, `First name`, `Last name`, `Email`.
 
+## Installation
+
+1. `composer req liquidlight/module-data-listing`
+2. Add the static include or add `@import 'EXT:module_data_listing/Configuration/TypoScript/setup'` to your TypoScript
+3. Ensure the correct users have permission to view
+
 ## Settings
 
 There are a few different settings that can be set on a site-by-site basis via typoscript. These are stored in the following typoscript path `module.tx_moduledatalisting.configuration.[configuration_name]` where *`configuration_name`* is derived from a classes `$configurationName` property.
