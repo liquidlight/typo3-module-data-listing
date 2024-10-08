@@ -70,7 +70,7 @@ define([
 
 		// Setting config - merges options
 		config: function(options = {}) {
-			ModuleDataListing.settings = Object.assign({}, ModuleDataListing.settings, options);
+			ModuleDataListing.settings = ModuleDataListing.utility.mergeObjects(ModuleDataListing.settings, options);
 		}
 	};
 
@@ -165,7 +165,7 @@ define([
 			// Initialise the datatable
 			const table = $(ModuleDataListing.settings.tableSelector)
 				.DataTable(
-					Object.assign({}, ModuleDataListing.settings.dataTable, settings)
+					ModuleDataListing.utility.mergeObjects(ModuleDataListing.settings.dataTable, settings)
 				);
 
 			// Add listener for search box to update storage
@@ -254,6 +254,25 @@ define([
 				$(this).prop('checked', false);
 			})
 		},
+	}
+
+	ModuleDataListing.utility = {
+		// Filter setup
+		mergeObjects: function (obj1, obj2) {
+			const result = { ...obj1 };
+
+			for (let key in obj2) {
+				if (obj2.hasOwnProperty(key)) {
+					if (obj2[key] instanceof Object && obj1[key] instanceof Object) {
+						result[key] = ModuleDataListing.utility.mergeObjects(obj1[key], obj2[key]);
+					} else {
+						result[key] = obj2[key];
+					}
+				}
+			}
+
+			return result;
+		}
 	}
 
 	return ModuleDataListing;
