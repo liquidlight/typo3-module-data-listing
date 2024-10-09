@@ -259,15 +259,15 @@ define([
 	ModuleDataListing.utility = {
 		// Filter setup
 		mergeObjects: function (obj1, obj2) {
-			const result = { ...obj1 };
+			const result = JSON.parse(JSON.stringify(obj1));
 
 			for (let key in obj2) {
-				if (obj2.hasOwnProperty(key)) {
-					if (obj2[key] instanceof Object && obj1[key] instanceof Object) {
-						result[key] = ModuleDataListing.utility.mergeObjects(obj1[key], obj2[key]);
-					} else {
-						result[key] = obj2[key];
-					}
+				if (obj2[key] instanceof Array && obj1[key] instanceof Array) {
+					result[key] = obj2[key];
+				} else if (obj2[key] instanceof Object && obj1[key] instanceof Object) {
+					result[key] = ModuleDataListing.utility.mergeObjects(obj1[key], obj2[key]);
+				} else {
+					result[key] = obj2[key];
 				}
 			}
 
