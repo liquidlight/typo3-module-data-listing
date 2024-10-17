@@ -117,9 +117,9 @@ class FeUsersController extends DatatableController
 			if (isset($row['usergroup'])) {
 				$usergroups = [];
 				foreach (explode(',', $row['usergroup']) as $usergroupUid) {
-                    if (!empty($usergroupUid)){
-					    $usergroups[] = $this->getUsergroupNameByUid($usergroupUid);
-                    }
+					if (!empty($usergroupUid)) {
+						$usergroups[] = $this->getUsergroupNameByUid($usergroupUid);
+					}
 				}
 				$row['usergroup'] = implode(', ', $usergroups);
 			}
