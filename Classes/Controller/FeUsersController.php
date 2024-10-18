@@ -114,12 +114,17 @@ class FeUsersController extends DatatableController
 
 			// Lookup the usergroups and replace IDs with titles
 			if (isset($row['usergroup'])) {
-				$usergroups = [];
-				foreach (explode(',', $row['usergroup']) as $usergroupUid) {
-					if (!empty($usergroupUid)) {
-						$usergroups[] = $this->getUsergroupNameByUid($usergroupUid);
-					}
-				}
+				$usergroups = array_filter(
+					array_map(
+						function ($usergroupUid): ?string {
+							$usergroupUid = (int)$usergroupUid;
+
+							return $usergroupUid ? $this->getUsergroupNameByUid($usergroupUid) : null;
+						},
+						GeneralUtility::trimExplode(',', $row['usergroup'] ?? '')
+					)
+				);
+
 				$row['usergroup'] = implode(', ', $usergroups);
 			}
 
