@@ -203,7 +203,7 @@ class FeUsersController extends DatatableController
 		;
 
 		if (!$usergroup) {
-			return false;
+			return null;
 		}
 
 		$cache[$usergroupUid] = $usergroup[0]['title'];
