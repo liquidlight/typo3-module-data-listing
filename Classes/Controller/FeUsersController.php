@@ -181,7 +181,7 @@ class FeUsersController extends DatatableController
 	/**
 	 * Lookup a usergroup
 	 */
-	private function getUsergroupNameByUid(int $usergroupUid): string
+	private function getUsergroupNameByUid(int $usergroupUid): ?string
 	{
 		static $cache = [];
 
