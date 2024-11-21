@@ -16,7 +16,6 @@ use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
-
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Core\Http\Response;
 
@@ -115,10 +114,17 @@ class FeUsersController extends DatatableController
 
 			// Lookup the usergroups and replace IDs with titles
 			if (isset($row['usergroup'])) {
-				$usergroups = [];
-				foreach (explode(',', $row['usergroup']) as $usergroupUid) {
-					$usergroups[] = $this->getUsergroupNameByUid($usergroupUid);
-				}
+				$usergroups = array_filter(
+					array_map(
+						function ($usergroupUid): ?string {
+							$usergroupUid = (int)$usergroupUid;
+
+							return $usergroupUid ? $this->getUsergroupNameByUid($usergroupUid) : null;
+						},
+						GeneralUtility::trimExplode(',', $row['usergroup'] ?? '')
+					)
+				);
+
 				$row['usergroup'] = implode(', ', $usergroups);
 			}
 
@@ -175,7 +181,7 @@ class FeUsersController extends DatatableController
 	/**
 	 * Lookup a usergroup
 	 */
-	private function getUsergroupNameByUid(int $usergroupUid): string
+	private function getUsergroupNameByUid(int $usergroupUid): ?string
 	{
 		static $cache = [];
 
@@ -197,7 +203,7 @@ class FeUsersController extends DatatableController
 		;
 
 		if (!$usergroup) {
-			return false;
+			return null;
 		}
 
 		$cache[$usergroupUid] = $usergroup[0]['title'];
