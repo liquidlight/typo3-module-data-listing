@@ -1,3 +1,93 @@
+/*
+ * CSS Taken from Datatables
+ */
+
+div.dt-container div.dt-layout-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	width: 100%;
+	margin: 0.75em 0;
+}
+
+div.dt-container div.dt-layout-row div.dt-layout-cell {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+div.dt-container div.dt-layout-row div.dt-layout-cell.dt-layout-start {
+	justify-content: flex-start;
+	margin-right: auto;
+}
+
+div.dt-container div.dt-layout-row div.dt-layout-cell.dt-layout-end {
+	justify-content: flex-end;
+	margin-left: auto;
+}
+
+div.dt-container div.dt-layout-row div.dt-layout-cell:empty {
+	display: none;
+}
+
+@media screen and (max-width: 767px) {
+	div.dt-container div.dt-layout-row:not(.dt-layout-table) {
+		display: block;
+	}
+
+	div.dt-container div.dt-layout-row:not(.dt-layout-table) div.dt-layout-cell {
+		display: block;
+		text-align: center;
+	}
+
+	div.dt-container div.dt-layout-row:not(.dt-layout-table) div.dt-layout-cell>* {
+		margin: 0.5em 0;
+	}
+
+	div.dt-container div.dt-layout-row:not(.dt-layout-table) div.dt-layout-cell.dt-layout-start {
+		margin-right: 0;
+	}
+
+	div.dt-container div.dt-layout-row:not(.dt-layout-table) div.dt-layout-cell.dt-layout-end {
+		margin-left: 0;
+	}
+}
+
+div.dt-container div.dt-layout-start>*:not(:last-child) {
+	margin-right: 1em;
+}
+
+div.dt-container div.dt-layout-end>*:not(:first-child) {
+	margin-left: 1em;
+}
+
+div.dt-container div.dt-layout-full {
+	width: 100%;
+}
+
+div.dt-container div.dt-layout-full>*:only-child {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+div.dt-container div.dt-layout-table>div {
+	display: block !important;
+}
+
+@media screen and (max-width: 767px) {
+	div.dt-container div.dt-layout-start>*:not(:last-child) {
+		margin-right: 0;
+	}
+
+	div.dt-container div.dt-layout-end>*:not(:first-child) {
+		margin-left: 0;
+	}
+}
+
+/*
+ * Custom CSS
+ **/
+
 .t3js-toggle-recordlist.collapsed img {
 	transform: rotate(-180deg);
 }
@@ -38,19 +128,19 @@
 }
 
 .dt-buttons {
-	padding-top: 18px;
+	padding-top: 1rem;
 	border-top: thin solid #ddd;
+	width: 100%;
 }
 
 .paging_full_numbers {
 	float: none;
-	margin: 18px 1px;
+	margin: 1rem 1px;
 	padding: 1px;
 	overflow: hidden;
 }
-.paginate_button {
+.dt-paging-button {
 	position: relative;
-    float: left;
     margin-left: -1px;
     line-height: 1.5;
     color: #212424;
@@ -59,24 +149,66 @@
     border: 1px solid #ddd;
 	cursor: pointer;
 	text-align: center;
-    min-width: 3rem;
+    min-width: 2rem;
+	min-height: 2rem;
+	text-align: center;
 }
-.paginate_button.current {
+.dt-paging-button.current {
 	color: #000;
 	background-color: #eee;
 }
-.paginate_button:hover {
+.dt-paging-button:hover {
 	color: #000;
     background-color: #f5f5f5;
     border-color: #ddd;
 }
-.paginate_button.disabled::before {
+.dt-paging-button.disabled::before {
 	opacity: 0.5;
 }
+.dt-paging .ellipsis {
+	padding: 0 0.2rem;
+}
+
+/* Padding normalization for pagination buttons */
+div[id$="table_paginate"] > span > .dt-paging-button,
+.dataTables_paginate > span > .dt-paging-button {
+	padding: 11px 13px;
+}
+
+div[id$="table_paginate"] > .dt-paging-button,
+.dataTables_paginate > .dt-paging-button {
+	padding: 9px 13px;
+}
+
 .form-inline {
-	display: grid;
-	grid-template-columns: max-content max-content;
-	grid-gap: 1em;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+.dt-length {
+	margin-right: auto;
+}
+
+
+.dt-search label,
+.dt-length label {
+	display: inline-block;
+	margin: 0 0.5rem;
+}
+.dt-search input,
+.dt-length select {
+	display: inline-block;
+	padding: 0.375rem 0.75rem;
+	font-size: 0.75rem;
+	font-weight: 400;
+	line-height: 1.5;
+	color: #333;
+	background-color: #fefefe;
+	background-clip: padding-box;
+	border: 1px solid #bbb;
+	border-radius: .125rem;
+	box-shadow: inset 0 1px 2px rgba(0, 0, 0, .075);
+	transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
 }
 
 /* Filter styling */
@@ -101,56 +233,6 @@ div[id$="table_filter"] > label > input {
 	margin: 0;
 }
 
-/* Pagination styles */
-.paginate_button {
-	min-height: 42px;
-}
-.paginate_button.first,
-.paginate_button.previous,
-.paginate_button.next,
-.paginate_button.last {
-	font-size: 0;
-}
-.paginate_button.first::before,
-.paginate_button.previous::before,
-.paginate_button.next::before,
-.paginate_button.last::before {
-	background-size: 1em 1em;
-	width: 20px;
-	height: 20px;
-	content: '';
-	display: block;
-	font-size: 22px;
-	color: #000;
-}
-.paginate_button.first::before {
-	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGcgZmlsbD0iY3VycmVudENvbG9yIj48cGF0aCBkPSJtOC40MTQgOCAzLjUzNi0zLjUzNi0uNzA3LS43MDdMNyA4bDQuMjQzIDQuMjQzLjcwNy0uNzA3ek01IDRoMXY4SDV6Ii8+PC9nPjwvc3ZnPg==");
-}
-.paginate_button.previous::before {
-	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGcgZmlsbD0iY3VycmVudENvbG9yIj48cGF0aCBkPSJNNi40MTQgOCA5Ljk1IDQuNDY0bC0uNzA3LS43MDdMNSA4bDQuMjQzIDQuMjQzLjcwNy0uNzA3eiIvPjwvZz48L3N2Zz4=");
-}
-.paginate_button.next::before {
-	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGcgZmlsbD0iY3VycmVudENvbG9yIj48cGF0aCBkPSJNOS41ODYgOCA2LjA1IDExLjUzNmwuNzA3LjcwN0wxMSA4IDYuNzU3IDMuNzU3bC0uNzA3LjcwN3oiLz48L2c+PC9zdmc+");
-}
-.paginate_button.last::before {
-	background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHhtbDpzcGFjZT0icHJlc2VydmUiIHZpZXdCb3g9IjAgMCAxNiAxNiI+PGcgZmlsbD0iY3VycmVudENvbG9yIj48cGF0aCBkPSJNNy41ODYgOCA0LjA1IDExLjUzNmwuNzA3LjcwN0w5IDggNC43NTcgMy43NTdsLS43MDcuNzA3ek0xMCA0aDF2OGgtMXoiLz48L2c+PC9zdmc+");
-}
-
-/* Hide the ellipses */
-div[id$="table_paginate"] > span > span,
-.dataTables_paginate > span > span {
-	display: none;
-}
-
-/* Padding normalization for pagination buttons */
-div[id$="table_paginate"] > span > .paginate_button,
-.dataTables_paginate > span > .paginate_button {
-	padding: 11px 13px;
-}
-div[id$="table_paginate"] > .paginate_button,
-.dataTables_paginate > .paginate_button {
-	padding: 9px 13px;
-}
 
 table[id$='table'] > tbody > tr {
 	height: 4rem;

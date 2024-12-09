@@ -11,7 +11,9 @@ define([
 			'processing': true,
 			'serverSide': true,
 			'order': [[0, 'desc']],
-			'dom': '<\'form-inline form-inline-spaced\'lf>prtipB',
+			'layout': {
+				bottom2: 'buttons',
+			},
 			'buttons': [
 				{
 					extend: 'csv',

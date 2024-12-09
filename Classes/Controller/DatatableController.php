@@ -47,10 +47,10 @@ abstract class DatatableController extends ActionController
 					'datatables.net-buttons-html5' => $extPath . '/Resources/Public/JavaScript/DataTables/buttons.html5.min',
 				],
 				'shim' => [
-					'datatables.net' => ['jquery'],
-					'datatables.net-buttons' => ['datatables.net'],
-					'datatables.net-buttons-print' => ['datatables.net-buttons'],
-					'datatables.net-buttons-html5' => ['datatables.net-buttons'],
+					'datatables.net' => ['jquery', 'exports' => 'datatables.net'],
+					'datatables.net-buttons' => ['datatables.net', 'exports' => 'datatables.net-buttons'],
+					'datatables.net-buttons-print' => ['datatables.net-buttons', 'exports' => 'datatables.net-buttons-print'],
+					'datatables.net-buttons-html5' => ['datatables.net-buttons', 'exports' => 'datatables.net-buttons-html5'],
 				],
 			]);
 		}

@@ -117,3 +117,16 @@ The icons currently available are:
 | `module-listing-map` | ![module-listing-mao](./Resources/Public/Icons/Map.svg) |
 | `module-listing-tools` | ![module-listing-tools](./Resources/Public/Icons/Tools.svg) |
 | `module-listing-users` | ![module-listing-users](./Resources/Public/Icons/Users.svg) |
+
+## Upgrading to 1.2.0
+
+Version `1.2.0` comes with DataTables 2.x, which uses the new layout property.
+
+If you have a local JavaScript file for you custom DataTables, you can remove the `dom` property and replace with `layout`.
+
+```diff
+-	'dom': '<\'form-inline form-inline-spaced\'lf>prtipB',
++	'layout': {
++		bottom2: 'buttons',
++	},
+```
