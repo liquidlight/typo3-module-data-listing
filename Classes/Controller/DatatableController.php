@@ -19,6 +19,7 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Utility\PathUtility;
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
@@ -35,7 +36,7 @@ abstract class DatatableController extends ActionController
 		/** @var BackendTemplateView $view */
 		parent::initializeView($view);
 
-		$extPath = PathUtility::getAbsoluteWebPath('../typo3conf/ext/module_data_listing');
+		$extPath = '/' . trim(PathUtility::stripPathSitePrefix(ExtensionManagementUtility::extPath('module_data_listing')), '/');
 
 		if ($view instanceof BackendTemplateView) {
 			$view->getModuleTemplate()->getPageRenderer()->addRequireJsConfiguration([
