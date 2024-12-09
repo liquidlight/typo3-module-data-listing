@@ -1,14 +1,7 @@
-# Minor
+# Major
 
 #### Feature
 
-- Upgrade DataTables to 2.x
-
-#### Fix
-
-- Load the ext path correctly
-- Check if user ID is in the group before processing
-
-#### Refactor
-
-- Lots of code tidy-up, refactoring and indenting correctly
+- BREAKING CHANGE: Restructure SetupTS related to `module.tx_moduledatalisting` (see README.md)
+- BREAKING CHANGE: `DatatableController` has various changes to properties and methods (see README.md)
+- Enabled dependency injection auto-wiring in Services.yaml

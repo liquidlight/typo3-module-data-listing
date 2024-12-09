@@ -11,22 +11,69 @@
 
 namespace LiquidLight\ModuleDataListing\Controller;
 
-use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
-use TYPO3\CMS\Backend\View\BackendTemplateView;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Connection;
+use Exception;
+use RuntimeException;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
+use TYPO3\CMS\Backend\View\BackendTemplateView;
+use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 
 abstract class DatatableController extends ActionController
 {
+	protected string $configurationName;
+
+	protected string $table;
+
+	protected array $headers;
+
+	protected array $columnSelectOverrides;
+
+	protected string $searchableColumns;
+
+	protected array $joins;
+
 	protected $defaultViewObjectName = BackendTemplateView::class;
+
+	protected ConnectionPool $connectionPool;
+
+	public function __construct(ConfigurationManagerInterface $configurationManagerInterface, ConnectionPool $connectionPool)
+	{
+		$this->connectionPool = $connectionPool;
+
+		$setup = $configurationManagerInterface->getConfiguration(
+			ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
+		);
+
+		if (!$configuration = $setup['module.']['tx_moduledatalisting.']['configuration.'][$this->configurationName . '.'] ?? false) {
+			throw new Exception(sprintf(
+				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
+				$this->configurationName,
+			));
+		}
+
+		$this->table = $configuration['table'] ?? $this->table;
+		$this->headers = $configuration['headers.'] ?? $this->headers ?? [];
+		$this->columnSelectOverrides = $configuration['columnSelectOverrides.'] ?? $this->columnSelectOverrides ?? [];
+		$this->joins = $configuration['joins.'] ?? $this->joins ?? [];
+		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? [];
+
+		foreach ($configuration['additionalColumns.'] ?? [] as $table => $columns) {
+			foreach ($columns as $column => $label) {
+				if (array_key_exists($table . $column, $this->headers)) {
+					continue;
+				}
+				$this->headers[$table . $column] = $label;
+			}
+		}
+
+	}
 
 	/**
 	 * Init view and load JS
@@ -59,61 +106,35 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Return query builder connection by table
 	 */
-	protected function getConnection(string $table): Connection
+	protected function getNewQueryBuilder(?string $table = null): QueryBuilder
 	{
-		return GeneralUtility::makeInstance(ConnectionPool::class)
-			->getConnectionForTable($table)
+		return $this->connectionPool
+			->getConnectionForTable($table ?? $this->table)
+			->createQueryBuilder()
 		;
 	}
 
-	/**
-	 * Lookup a usergroup
-	 */
-	protected function getHeaders(array $default): array
+	protected function prepareQuery(array $params): QueryBuilder
 	{
-		static $headers = [];
+		$query = $this->getNewQueryBuilder();
 
-		if (count($headers)) {
-			return $headers;
-		}
+		$query->from($this->table);
 
-		if (!$additional = $this->getModuleSettings()['additionalColumns.']) {
-			return $default;
-		}
-
-		$headers = $default;
-
-		// Apply additional headers
-		foreach ($additional as $table => $columns) {
-			foreach ($columns as $column => $label) {
-				if (!array_key_exists($table . $column, $headers)) {
-					$headers[$table . $column] = $label;
-				}
-			}
-		}
-
-		return $headers;
-	}
-
-	protected function getModuleSettings(): ?array
-	{
-		static $settings = [];
-
-		if (count($settings)) {
-			return $settings;
-		}
-
-		// Load module settings
-		$setup = GeneralUtility::makeInstance(ObjectManager::class)
-			->get(ConfigurationManagerInterface::class)
-			->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT)
+		$query
+			->getRestrictions()
+			->removeAll()
+			->add(GeneralUtility::makeInstance(DeletedRestriction::class))
 		;
 
-		if ($settings = $setup['module.'][$this->moduleName . '.']['settings.']) {
-			return $settings;
-		}
+		// Re-apply restrictions
+		$this
+			->applyDeleteFilter($query, $this->table, $this->table)
+			->applyJoins($query, $query)
+			->applyFilters($query, $params)
+			->applySearch($query, $params)
+		;
 
-		return null;
+		return $query;
 	}
 
 	/**
@@ -121,69 +142,32 @@ abstract class DatatableController extends ActionController
 	 */
 	protected function getTableData(array $params): array
 	{
-		$connection = $this->getConnection($this->table);
-		$queryBuilder = $connection->createQueryBuilder();
+		$query = $this->prepareQuery($params);
 
-		/**
-		 * Users without attached fees were not returned in the count due to null values
-		 * Removing restrictions and re-apply to fe_users only solves this
-		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
-		*/
-		$queryBuilder
-			->getRestrictions()
-			->removeAll()
-			->add(GeneralUtility::makeInstance(DeletedRestriction::class))
-		;
-
-		// Re-apply restrictions
-		$query = $queryBuilder
-			->select(...array_keys($this->getHeaders($this->headers)))
-			->from($this->table)
-			->where(
-				$queryBuilder->expr()->eq(
-					$this->table . '.deleted',
-					0
-				),
-			)
-		;
-
-		// Apply joins
-		$query = $this->applyJoins($queryBuilder, $query);
-
-		// Apply filters
-		if ($params['filters'] ?? false) {
-			$query = $this->applyFilters($queryBuilder, $query, $params);
+		$selectFields = array_keys($this->headers);
+		foreach ($selectFields as $field) {
+			if (isset($this->columnSelectOverrides[$field])) {
+				$query->addSelectLiteral(sprintf(
+					'%s as `%s`',
+					$this->columnSelectOverrides[$field],
+					$field,
+				));
+			} else {
+				$query->addSelect($field);
+			}
 		}
 
 		// Page
 		if ($params['start'] ?? false) {
-			$query = $query->setFirstResult($params['start']);
+			$query->setFirstResult($params['start']);
 		}
 
 		// Order
-		$order = $params['order'][0];
-
-		if (isset($order['column']) && $order['dir']) {
-			$headerKeys = array_keys($this->getHeaders($this->headers));
-
-			// Get column to order by and use alias if present
-			if (strpos($headerKeys[$order['column']], ' as ') !== false) {
-				$column = explode(' as ', $headerKeys[$order['column']])[1];
-			} else {
-				$column = $headerKeys[$order['column']];
-			}
-
-			$query = $query->orderBy($column, $order['dir']);
-		} else {
-			$query = $query->orderBy($this->table . '.uid', 'DESC');
-		}
-
-		// Apply search
-		$query = $this->applySearch($queryBuilder, $query, $params);
+		$this->applyOrder($query, $params);
 
 		// Page size
 		if ($params['length'] > 0) {
-			$query = $query
+			$query
 				->setMaxResults($params['length'])
 			;
 		}
@@ -201,40 +185,9 @@ abstract class DatatableController extends ActionController
 	 */
 	protected function getCount(array $params): int
 	{
-		$connection = $this->getConnection($this->table);
-		$queryBuilder = $connection->createQueryBuilder();
+		$query = $this->prepareQuery($params);
 
-		/**
-		 * Users without attached fees were not returned in the count due to null values
-		 * Removing restrictions and re-apply to table only solves this
-		 * @todo TYPO3 v10+ has a cleaner way of doing this: https://docs.typo3.org/m/typo3/reference-coreapi/10.4/en-us/ApiOverview/Database/RestrictionBuilder/Index.html#limitrestrictionstotables
-		*/
-		$queryBuilder
-			->getRestrictions()
-			->removeAll()
-		;
-
-		$query = $queryBuilder
-			->count($this->table . '.uid')
-			->from($this->table)
-			->where(
-				$queryBuilder->expr()->eq(
-					$this->table . '.deleted',
-					0
-				),
-			)
-		;
-
-		// Apply joins
-		$query = $this->applyJoins($queryBuilder, $query, $this->table);
-
-		// Apply filters
-		if ($params['filters']) {
-			$query = $this->applyFilters($queryBuilder, $query, $params);
-		}
-
-		// Apply search
-		$query = $this->applySearch($queryBuilder, $query, $params);
+		$query->count($this->table . '.uid');
 
 		$count = $query
 			->executeQuery()
@@ -247,150 +200,91 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Apply search to query
 	 */
-	protected function applySearch(QueryBuilder $queryBuilder, QueryBuilder $query, array $params): QueryBuilder
+	protected function applySearch(QueryBuilder $query, array $params): self
 	{
 		if ($params['search']['value']) {
-			$columnStr = $this->getModuleSettings()['searchableColumns'];
-			$searchableColumns = GeneralUtility::trimExplode(',', $columnStr);
+			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns);
 
-			$searchQuery = $queryBuilder->expr()->orX();
+			$searchQuery = $query->expr()->orX();
 			foreach ($searchableColumns as $field) {
 				$searchQuery->add(
-					$queryBuilder->expr()->like(
+					$query->expr()->like(
 						$field,
-						$queryBuilder->createNamedParameter('%' . $queryBuilder->escapeLikeWildcards($params['search']['value']) . '%')
+						$query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%')
 					)
 				);
 			}
 
-			$query = $query->andWhere($searchQuery);
+			$query->andWhere($searchQuery);
 		}
 
-		return $query;
+		return $this;
 	}
 
 	/**
 	 * Apply joins to query
 	 */
-	protected function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
+	protected function applyJoins(QueryBuilder $query): self
 	{
-		$joins = $this->getModuleSettings()['joins.'];
-		if (!$joins) {
-			return $query;
-		}
+		$joins = $this->joins ?? [];
+
+		$typesAllowed = ['join', 'leftJoin', 'rightJoin', 'innerJoin'];
 
 		// Apply joins from settings
-		foreach ($joins as $join) {
-			// Should we be using an alias for join?
-			if (array_key_exists('as', $join)) {
-				$joinTable = $join['as'];
-			} else {
-				$joinTable = $join['table'];
+		foreach ($joins as $alias => $join) {
+
+			foreach (['table', 'type', 'on'] as $property) {
+				if (!isset($join[$property])) {
+					throw new RuntimeException(sprintf(
+						'Expected join definition %s to contain %s',
+						$alias,
+						$property
+					));
+				}
 			}
 
-			switch ($type = $join['type']) {
-				case 'leftJoin':
-				case 'rightJoin':
-					$query = $query
-						->$type(
-							$this->table,
-							$join['table'],
-							$joinTable,
-							$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-						)
-					;
-					break;
-				case 'innerJoin':
-					// Apply many-to-many joins
-					if (substr($join['table'], -3) === '_mm') {
-						// Should we be using an alias for secondary?
-						if (array_key_exists('secondaryTableAs', $join)) {
-							$secondaryJoinTable = $join['secondaryTableAs'];
-						} else {
-							$secondaryJoinTable = $join['secondaryTable'];
-						}
+			$alias = substr($alias, 0, -1); // Remove the trailing . from TS
+			$table = $join['table'];
+			$type = $join['type'];
+			$on = $join['on'];
 
-						// Do we need to apply an additional where clause to join table?
-						if (array_key_exists('secondaryWhereField', $join) && array_key_exists('secondaryWhereValue', $join)) {
-							$query = $query
-								->innerJoin(
-									$this->table,
-									$join['table'],
-									$joinTable,
-									$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.uid'))
-								)
-								->innerJoin(
-									$joinTable,
-									$join['secondaryTable'],
-									$secondaryJoinTable,
-									$queryBuilder->expr()->andX(
-										$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($joinTable . '.' . $join['secondaryForeignIdentifier'])),
-										$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryWhereField'], $queryBuilder->createNamedParameter($join['secondaryWhereValue']))
-									)
-								)
-							;
-							break;
-						}
-
-						// Apply mm join without additional where clause
-						$query = $query
-							->innerJoin(
-								$this->table,
-								$join['table'],
-								$joinTable,
-								$queryBuilder->expr()->eq($joinTable . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.uid'))
-							)
-							->innerJoin(
-								$joinTable,
-								$join['secondaryTable'],
-								$secondaryJoinTable,
-								$queryBuilder->expr()->eq($secondaryJoinTable . '.' . $join['secondaryLocalIdentifier'], $queryBuilder->quoteIdentifier($join['table'] . '.' . $join['secondaryForeignIdentifier']))
-							)
-						;
-						break;
-					}
-
-					// Apply standard join
-					$query = $query
-						->innerJoin(
-							$this->table,
-							$join['table'],
-							$join['table'],
-							$queryBuilder->expr()->eq($join['table'] . '.' . $join['localIdentifier'], $queryBuilder->quoteIdentifier($this->table . '.' . $join['foreignIdentifier']))
-						)
-					;
-					break;
+			if (!in_array($type, $typesAllowed, true)) {
+				throw new RuntimeException(sprintf(
+					'Unexpected join definition %s has type of %s',
+					$alias,
+					$type,
+				));
 			}
+
+			// Perform the join
+			$query->$type($this->table, $table, $alias, $on);
+
+			$this->applyDeleteFilter($query, $table, $alias);
 		}
 
-		foreach ($joins as $join) {
-			// Don't check the mm tables
-			if (substr($join['table'], -3) === '_mm') {
-				continue;
-			}
+		return $this;
+	}
 
-			$query = $query
-				->where(
-					$queryBuilder->expr()->orX(
-						$queryBuilder->expr()->eq(
-							$joinTable . '.deleted',
-							0
-						),
-						$queryBuilder->expr()->isNull(
-							$joinTable . '.deleted'
-						),
-					),
-				)
-			;
+	protected function applyDeleteFilter(QueryBuilder $query, string $table, string $alias, bool $restrict = true): self
+	{
+		// Exclude anything that is deleted
+		if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
+			$deleteFiled = $alias . '.' . $deleteFiled;
+			$query->where(
+				$query->expr()->orX(
+					$query->expr()->eq($deleteFiled, 0),
+					$query->expr()->isNull($deleteFiled),
+				),
+			);
 		}
 
-		return $query;
+		return $this;
 	}
 
 	/**
 	 * Apply filters to query
 	 */
-	protected function applyFilters(QueryBuilder $queryBuilder, QueryBuilder $query, array $params): QueryBuilder
+	protected function applyFilters(QueryBuilder $query, array $params): self
 	{
 		foreach ($params['filters'] ?? [] as $field => $filter) {
 			// If filtering by usergroup
@@ -399,30 +293,30 @@ abstract class DatatableController extends ActionController
 			if (is_array($filter) && (count($filter) > 1)) {
 				foreach ($filter as $value) {
 					if ($field === 'usergroup') {
-						$query = $query
+						$query
 							->andWhere(
-								$queryBuilder->expr()->orX(
-									$queryBuilder->expr()->like(
+								$query->expr()->orX(
+									$query->expr()->like(
 										$field,
-										$queryBuilder->createNamedParameter($queryBuilder->escapeLikeWildcards($value) . ',%')
+										$query->createNamedParameter($query->escapeLikeWildcards($value) . ',%')
 									),
-									$queryBuilder->expr()->like(
+									$query->expr()->like(
 										$field,
-										$queryBuilder->createNamedParameter('%,' . $queryBuilder->escapeLikeWildcards($value) . ',%')
+										$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value) . ',%')
 									),
-									$queryBuilder->expr()->like(
+									$query->expr()->like(
 										$field,
-										$queryBuilder->createNamedParameter('%,' . $queryBuilder->escapeLikeWildcards($value))
+										$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value))
 									)
 								),
 							)
 						;
 					} else {
-						$query = $query
+						$query
 							->andWhere(
-								$queryBuilder->expr()->eq(
+								$query->expr()->eq(
 									$field,
-									$queryBuilder->createNamedParameter(
+									$query->createNamedParameter(
 										$value
 									)
 								)
@@ -431,11 +325,11 @@ abstract class DatatableController extends ActionController
 					}
 				}
 			} else {
-				$query = $query
+				$query
 					->andWhere(
-						$queryBuilder->expr()->eq(
+						$query->expr()->eq(
 							$field,
-							$queryBuilder->createNamedParameter(
+							$query->createNamedParameter(
 								is_array($filter) ? $filter[0] : $filter
 							)
 						)
@@ -443,6 +337,56 @@ abstract class DatatableController extends ActionController
 				;
 			}
 		}
-		return $query;
+		return $this;
+	}
+
+	/**
+	 *
+	 */
+	public function applyOrder(QueryBuilder $query, array $params)
+	{
+
+		$orders = $params['order'] ?? [];
+		$columnCount = count($this->headers);
+
+		foreach ($orders as $order) {
+
+			// Prepare the directions
+			$dir = strtoupper($order['dir'] ?? 'ASC');
+
+			if (!in_array($dir, ['ASC', 'DESC'], true)) {
+				continue;
+			}
+
+			// Prepare the column index
+			$column = $order['column'] ?? false;
+
+			if (!is_numeric($column)) {
+				continue;
+			}
+
+			$column = (int)$column;
+
+			if (!is_int($column)) {
+				continue;
+			} elseif (0 > $column || $column >= $columnCount) {
+				continue;
+			}
+
+			// Note: SQL order by column index is 1-base
+			$query->getConcreteQueryBuilder()->addOrderBy($column + 1, $dir);
+		}
+
+		return $this;
+	}
+
+	/**
+	 * Default action: index
+	 */
+	public function indexAction(): void
+	{
+		$this->view->assignMultiple([
+			'headers' => array_values($this->headers),
+		]);
 	}
 }
