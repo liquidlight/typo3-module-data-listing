@@ -77,7 +77,7 @@ abstract class DatatableController extends ActionController
 			return $headers;
 		}
 
-		if (!$additional = $this->getModuleSettings()['additionalColumns.']) {
+		if (!$additional = ($this->getModuleSettings()['additionalColumns.'] ?? null)) {
 			return $default;
 		}
 
@@ -229,7 +229,7 @@ abstract class DatatableController extends ActionController
 		$query = $this->applyJoins($queryBuilder, $query, $this->table);
 
 		// Apply filters
-		if ($params['filters']) {
+		if (isset($params['filters'])) {
 			$query = $this->applyFilters($queryBuilder, $query, $params);
 		}
 
@@ -274,7 +274,7 @@ abstract class DatatableController extends ActionController
 	 */
 	protected function applyJoins(QueryBuilder $queryBuilder, QueryBuilder $query): QueryBuilder
 	{
-		$joins = $this->getModuleSettings()['joins.'];
+		$joins = ($this->getModuleSettings()['joins.'] ?? null);
 		if (!$joins) {
 			return $query;
 		}
