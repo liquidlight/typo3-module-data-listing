@@ -1,3 +1,11 @@
+# 1.2.1
+
+**17th February 2025**
+
+#### Fix
+
+- Update group/filter HTML to not look like a toggle and show contents (see README for [upgrade steps](https://github.com/liquidlight/typo3-module-data-listing#upgrading-to-120))
+
 # 1.2.0
 
 **17th February 2025**
