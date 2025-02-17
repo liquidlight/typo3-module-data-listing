@@ -120,6 +120,9 @@ The icons currently available are:
 
 ## Upgrading to 1.2.0
 
+- [Show the contents](https://github.com/liquidlight/typo3-module-data-listing/commit/4ee5a06b5e5d4c7e04f1999a975e508e6a91a959) of any overridden filters (add the class of `show`)
+- Update DataTables JavaScript (see below)
+
 Version `1.2.0` comes with DataTables 2.x, which uses the new layout property.
 
 If you have a local JavaScript file for you custom DataTables, you can remove the `dom` property and replace with `layout`.
