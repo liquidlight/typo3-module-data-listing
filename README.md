@@ -122,7 +122,7 @@ There number of critical differences between v1 and v2.
 * New property `protected array $columnSelectOverrides` maps fields to complex SQL; useful for handling computed values.
 * Method `protected function getConnection(string $table): Connection` changed to `protected function getConnection(?string $table = null): Connection`. Calling without an argument uses `$this->table`.
 * Method `protected function getHeaders(array $default): array` changed to `protected function getHeaders(): array`. Uses `$this->headers` internally, which was otherwise always passed-in.
-* Method `indexAction(): void` implemented as per the old sub-class instructions. As a result you no longer need to define `indexAction()` to have default behaviour, you can alternatively call `parent::index()` to expand on the default behaviour.
+* Method `indexAction(): void` implemented as per the old sub-class instructions. As a result you no longer need to define `indexAction()` to have default behaviour, you can alternatively call `parent::indexAction()` to expand on the default behaviour.
 
 > [!Note]
 > Previously the `$table`, `$moduleName` and `$headers` properties where not _explicitly_ defined, but where expected to be defined in sub-classes. They are now explicitly defined in this class. If you have previously extended `DatatableController` you will likely need to change your definitions to match.
@@ -196,3 +196,6 @@ The following in a breakdown of the class properties and their respective typosc
 
 > [!Note]
 > When joining tables you should use the alias in place of the table name for the purposes of `searchableColumns`, `headers`, and `columnSelectOverrides`.
+
+> [!Note]
+> When performing a search on any fields that are defined in `$columnSelectOverrides`, the WHERE condition will include the overridden SQL. This prevents an alias from being used in the case of a complex SQL expression.
