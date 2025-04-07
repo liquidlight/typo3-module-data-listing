@@ -12,12 +12,14 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use LiquidLight\ModuleDataListing\Controller\DatatableController;
-use TYPO3\CMS\Backend\View\BackendTemplateView;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Backend\Routing\UriBuilder;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Routing\UriBuilder;
 use TYPO3\CMS\Core\Http\Response;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+
+#[AsController]
 
 class FeUsersController extends DatatableController
 {
@@ -65,20 +67,6 @@ class FeUsersController extends DatatableController
 	protected string $configurationName = 'fe_users';
 
 	/**
-	 * Init view
-	 */
-	public function initializeView(ViewInterface $view): void
-	{
-		/** @var BackendTemplateView $view */
-		parent::initializeView($view);
-
-		// Load the JS
-		if ($view instanceof BackendTemplateView) {
-			$view->getModuleTemplate()->getPageRenderer()->loadRequireJsModule('TYPO3/CMS/ModuleDataListing/FeUsersDataTable');
-		}
-	}
-
-	/**
 	 * Render DataTables ajax call
 	 */
 	public function renderAjax(ServerRequestInterface $request): Response
@@ -96,7 +84,7 @@ class FeUsersController extends DatatableController
 		$data = [];
 		foreach ($tableData as $row) {
 			// Build the edit link
-			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_ModuleDataListingTxModuleDataListingFeusers');
+			$returnUrl = $uriBuilder->buildUriFromRoutePath('/module/datalisting/feusers');
 
 			$uriParameters = [
 				'edit' => [
@@ -140,27 +128,23 @@ class FeUsersController extends DatatableController
 		}
 
 		$return = [
-			"draw" => $params['draw'],
-			"recordsTotal" => $count,
-			"recordsFiltered" => $count,
-			"data" => $data,
+			'draw' => $params['draw'],
+			'recordsTotal' => $count,
+			'recordsFiltered' => $count,
+			'data' => $data,
 		];
-		$response = new Response();
 
-		$response->getBody()->write(json_encode($return));
-
-		return $response;
+		return $this->jsonResponse(json_encode($return));
 	}
 
 	/**
 	 * Default action: index
 	 */
-	public function indexAction(): void
+	public function indexAction(): ResponseInterface
 	{
-		parent::indexAction();
-		$this->view->assignMultiple([
-			'groups' => $this->getUsergroups(),
-		]);
+		$this->pageRenderer->loadRequireJsModule('TYPO3/CMS/ModuleDataListing/FeUsersDataTable');
+
+		return parent::indexAction();
 	}
 
 	/**
@@ -169,10 +153,7 @@ class FeUsersController extends DatatableController
 	private function getUsergroups(): array
 	{
 		$usergroups = $this->getNewQueryBuilder('fe_groups')
-			->select('title', 'uid')
-			->from('fe_groups')
-			->execute()
-			->fetchAll()
+			->select('title', 'uid')->from('fe_groups')->executeQuery()->fetchAllAssociative()
 		;
 
 		return $usergroups;
@@ -193,12 +174,7 @@ class FeUsersController extends DatatableController
 
 		$usergroup = $queryBuilder
 			->select('title')
-			->from('fe_groups')
-			->where(
-				$queryBuilder->expr()->eq('uid', $usergroupUid)
-			)
-			->execute()
-			->fetchAll()
+			->from('fe_groups')->where($queryBuilder->expr()->eq('uid', $usergroupUid))->executeQuery()->fetchAllAssociative()
 		;
 
 		if (!$usergroup) {
