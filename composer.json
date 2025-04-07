@@ -32,9 +32,9 @@
         "source": "https://github.com/liquidlight/module_data_listing"
     },
     "require": {
-        "typo3/cms-backend": "^11.5",
-        "typo3/cms-core": "^11.5",
-        "typo3/cms-extbase": "^11.5"
+        "typo3/cms-backend": "^12.4",
+        "typo3/cms-core": "^12.4",
+        "typo3/cms-extbase": "^12.4"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.64"
