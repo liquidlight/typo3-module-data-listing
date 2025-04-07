@@ -7,7 +7,7 @@ define([
 	'datatables.net-buttons',
 	'datatables.net-buttons-print',
 	'datatables.net-buttons-html5'
-], function () {
+], function ($) {
 	var ModuleDataListing = {
 		settings: {
 			// The URL called when updating the datatable

@@ -12,18 +12,20 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use Exception;
+use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
-use TYPO3\CMS\Core\Utility\PathUtility;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Page\PageRenderer;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
+
+#[AsController]
 
 abstract class DatatableController extends ActionController
 {
@@ -39,12 +41,14 @@ abstract class DatatableController extends ActionController
 
 	protected array $joins;
 
-	protected $defaultViewObjectName = BackendTemplateView::class;
-
 	protected ConnectionPool $connectionPool;
 
-	public function __construct(ConfigurationManagerInterface $configurationManagerInterface, ConnectionPool $connectionPool)
-	{
+	public function __construct(
+		ConfigurationManagerInterface $configurationManagerInterface,
+		ConnectionPool $connectionPool,
+		protected ModuleTemplateFactory $moduleTemplateFactory,
+		protected PageRenderer $pageRenderer
+	) {
 		$this->connectionPool = $connectionPool;
 
 		$setup = $configurationManagerInterface->getConfiguration(
@@ -55,7 +59,7 @@ abstract class DatatableController extends ActionController
 			throw new Exception(sprintf(
 				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
 				$this->configurationName,
-			));
+			), 3669489497);
 		}
 
 		$this->table = $configuration['table'] ?? $this->table;
@@ -72,35 +76,39 @@ abstract class DatatableController extends ActionController
 				$this->headers[$table . $column] = $label;
 			}
 		}
-
 	}
 
-	/**
-	 * Init view and load JS
-	 */
-	public function initializeView(ViewInterface $view): void
+	public function initializeView($view): void
 	{
-		/** @var BackendTemplateView $view */
-		parent::initializeView($view);
+		$extPath = PathUtility::getPublicResourceWebPath('EXT:module_data_listing/Resources/Public');
 
-		$extPath = '/' . trim(PathUtility::stripPathSitePrefix(ExtensionManagementUtility::extPath('module_data_listing')), '/');
-
-		if ($view instanceof BackendTemplateView) {
-			$view->getModuleTemplate()->getPageRenderer()->addRequireJsConfiguration([
-				'paths' => [
-					'datatables.net' => $extPath . '/Resources/Public/JavaScript/DataTables/jquery.dataTables.min',
-					'datatables.net-buttons' => $extPath . '/Resources/Public/JavaScript/DataTables/dataTables.buttons.min',
-					'datatables.net-buttons-print' => $extPath . '/Resources/Public/JavaScript/DataTables/buttons.print.min',
-					'datatables.net-buttons-html5' => $extPath . '/Resources/Public/JavaScript/DataTables/buttons.html5.min',
+		$this->pageRenderer->addRequireJsConfiguration([
+			'paths' => [
+				'jquery' => $extPath . '/JavaScript/DataTables/jquery.min',
+				'datatables.net' => $extPath . '/JavaScript/DataTables/jquery.dataTables.min',
+				'datatables.net-buttons' => $extPath . '/JavaScript/DataTables/dataTables.buttons.min',
+				'datatables.net-buttons-print' => $extPath . '/JavaScript/DataTables/buttons.print.min',
+				'datatables.net-buttons-html5' => $extPath . '/JavaScript/DataTables/buttons.html5.min',
+			],
+			'shim' => [
+				'datatables.net' => [
+					'jquery',
+					'exports' => 'datatables.net',
 				],
-				'shim' => [
-					'datatables.net' => ['jquery', 'exports' => 'datatables.net'],
-					'datatables.net-buttons' => ['datatables.net', 'exports' => 'datatables.net-buttons'],
-					'datatables.net-buttons-print' => ['datatables.net-buttons', 'exports' => 'datatables.net-buttons-print'],
-					'datatables.net-buttons-html5' => ['datatables.net-buttons', 'exports' => 'datatables.net-buttons-html5'],
+				'datatables.net-buttons' => [
+					'datatables.net',
+					'exports' => 'datatables.net-buttons',
 				],
-			]);
-		}
+				'datatables.net-buttons-print' => [
+					'datatables.net-buttons',
+					'exports' => 'datatables.net-buttons-print',
+				],
+				'datatables.net-buttons-html5' => [
+					'datatables.net-buttons',
+					'exports' => 'datatables.net-buttons-html5',
+				],
+			],
+		]);
 	}
 
 	/**
@@ -189,10 +197,7 @@ abstract class DatatableController extends ActionController
 
 		$query->count($this->table . '.uid');
 
-		$count = $query
-			->executeQuery()
-			->fetchColumn(0)
-		;
+		$count = $query->executeQuery()->fetchOne(0);
 
 		return (int)$count;
 	}
@@ -205,14 +210,12 @@ abstract class DatatableController extends ActionController
 		if ($params['search']['value']) {
 			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns);
 
-			$searchQuery = $query->expr()->orX();
+			$searchQuery = $query->expr()->or();
 			foreach ($searchableColumns as $field) {
-				$searchQuery->add(
-					$query->expr()->like(
-						$field,
-						$query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%')
-					)
-				);
+				$searchQuery = $searchQuery->with($query->expr()->like(
+					$field,
+					$query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%')
+				));
 			}
 
 			$query->andWhere($searchQuery);
@@ -239,7 +242,7 @@ abstract class DatatableController extends ActionController
 						'Expected join definition %s to contain %s',
 						$alias,
 						$property
-					));
+					), 1922011475);
 				}
 			}
 
@@ -253,7 +256,7 @@ abstract class DatatableController extends ActionController
 					'Unexpected join definition %s has type of %s',
 					$alias,
 					$type,
-				));
+				), 3841052666);
 			}
 
 			// Perform the join
@@ -271,10 +274,7 @@ abstract class DatatableController extends ActionController
 		if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
 			$deleteFiled = $alias . '.' . $deleteFiled;
 			$query->where(
-				$query->expr()->orX(
-					$query->expr()->eq($deleteFiled, 0),
-					$query->expr()->isNull($deleteFiled),
-				),
+				$query->expr()->or($query->expr()->eq($deleteFiled, 0), $query->expr()->isNull($deleteFiled)),
 			);
 		}
 
@@ -295,20 +295,16 @@ abstract class DatatableController extends ActionController
 					if ($field === 'usergroup') {
 						$query
 							->andWhere(
-								$query->expr()->orX(
-									$query->expr()->like(
-										$field,
-										$query->createNamedParameter($query->escapeLikeWildcards($value) . ',%')
-									),
-									$query->expr()->like(
-										$field,
-										$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value) . ',%')
-									),
-									$query->expr()->like(
-										$field,
-										$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value))
-									)
-								),
+								$query->expr()->or($query->expr()->like(
+									$field,
+									$query->createNamedParameter($query->escapeLikeWildcards($value) . ',%')
+								), $query->expr()->like(
+									$field,
+									$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value) . ',%')
+								), $query->expr()->like(
+									$field,
+									$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value))
+								)),
 							)
 						;
 					} else {
@@ -383,10 +379,23 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Default action: index
 	 */
-	public function indexAction(): void
+	public function indexAction(): ResponseInterface
 	{
 		$this->view->assignMultiple([
 			'headers' => array_values($this->headers),
 		]);
+
+		return $this->renderHtml();
+	}
+
+	/**
+	 * Render the view
+	 */
+	protected function renderHtml(): ResponseInterface
+	{
+		$moduleTemplate = $this->moduleTemplateFactory->create($this->request);
+		$moduleTemplate->setContent($this->view->render());
+
+		return $this->htmlResponse($moduleTemplate->renderContent());
 	}
 }
