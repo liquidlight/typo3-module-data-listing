@@ -67,6 +67,13 @@ class FeUsersController extends DatatableController
 	protected string $configurationName = 'fe_users';
 
 	/**
+	 * JS file namespace
+	 * 
+	 * @var ?string
+	 */
+	protected $jsNamespace = 'TYPO3/CMS/Cpd/AnnualSubmissionsDataTable';
+
+	/**
 	 * Render DataTables ajax call
 	 */
 	public function renderAjax(ServerRequestInterface $request): Response
@@ -135,16 +142,6 @@ class FeUsersController extends DatatableController
 		];
 
 		return $this->jsonResponse(json_encode($return));
-	}
-
-	/**
-	 * Default action: index
-	 */
-	public function indexAction(): ResponseInterface
-	{
-		$this->pageRenderer->loadRequireJsModule('TYPO3/CMS/ModuleDataListing/FeUsersDataTable');
-
-		return parent::indexAction();
 	}
 
 	/**

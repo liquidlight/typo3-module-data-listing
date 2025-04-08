@@ -29,6 +29,13 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 abstract class DatatableController extends ActionController
 {
+	/**
+	 * JS file namespace
+	 *
+	 * @var ?string
+	 */
+	protected $jsNamespace = null;
+
 	protected string $configurationName;
 
 	protected string $table;
@@ -381,6 +388,10 @@ abstract class DatatableController extends ActionController
 	 */
 	public function indexAction(): ResponseInterface
 	{
+		if ($this->jsNamespace) {
+			$this->pageRenderer->loadRequireJsModule($this->jsNamespace);
+		}
+
 		$this->view->assignMultiple([
 			'headers' => array_values($this->headers),
 		]);
