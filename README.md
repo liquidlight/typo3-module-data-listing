@@ -92,7 +92,10 @@ The icons currently available are:
 | iconIdentifier | preview |
 |---|---|
 | `module-listing-company` | ![module-listing-company](./Resources/Public/Icons/Company.svg) |
-| `module-listing-map` | ![module-listing-mao](./Resources/Public/Icons/Map.svg) |
+| `module-listing-document` | ![module-listing-document](./Resources/Public/Icons/Document.svg) |
+| `module-listing-map` | ![module-listing-map](./Resources/Public/Icons/Map.svg) |
+| `module-listing-money` | ![module-listing-money](./Resources/Public/Icons/Money.svg) |
+| `module-listing-report` | ![module-listing-report](./Resources/Public/Icons/Report.svg) |
 | `module-listing-tools` | ![module-listing-tools](./Resources/Public/Icons/Tools.svg) |
 | `module-listing-users` | ![module-listing-users](./Resources/Public/Icons/Users.svg) |
 
