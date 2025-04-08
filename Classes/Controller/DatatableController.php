@@ -48,11 +48,9 @@ abstract class DatatableController extends ActionController
 
 	protected array $joins;
 
-	protected ConnectionPool $connectionPool;
-
 	public function __construct(
 		ConfigurationManagerInterface $configurationManagerInterface,
-		ConnectionPool $connectionPool,
+		protected ConnectionPool $connectionPool,
 		protected ModuleTemplateFactory $moduleTemplateFactory,
 		protected PageRenderer $pageRenderer
 	) {

@@ -68,7 +68,7 @@ class FeUsersController extends DatatableController
 
 	/**
 	 * JS file namespace
-	 * 
+	 *
 	 * @var ?string
 	 */
 	protected $jsNamespace = 'TYPO3/CMS/Cpd/AnnualSubmissionsDataTable';
