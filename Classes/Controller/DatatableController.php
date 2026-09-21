@@ -217,10 +217,16 @@ abstract class DatatableController extends ActionController
 
 			$searchQuery = $query->expr()->or();
 			foreach ($searchableColumns as $field) {
-				$searchQuery = $searchQuery->with($query->expr()->like(
-					$field,
-					$query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%')
-				));
+				$param = $query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%');
+
+				$expression = isset($this->columnSelectOverrides[$field]) ?
+					// If we have a column override we need to filter on that
+					// override and not the field (alias) itself
+					sprintf('%s LIKE %s', $this->columnSelectOverrides[$field], $param) :
+					// Otherwise we can filter directly off the field itself
+					$query->expr()->like($field, $param);
+
+				$searchQuery = $searchQuery->with($expression);
 			}
 
 			$query->andWhere($searchQuery);

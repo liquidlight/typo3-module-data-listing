@@ -1,3 +1,38 @@
+# 2.0.0
+
+**21st September 2026**
+
+#### Feature
+
+- BREAKING CHANGE: Restructure SetupTS related to `module.tx_moduledatalisting` (see README.md)
+- BREAKING CHANGE: `DatatableController` has various changes to properties and methods (see README.md)
+- Enabled dependency injection auto-wiring in Services.yaml
+
+# 1.2.1
+
+**17th February 2025**
+
+#### Fix
+
+- Update group/filter HTML to not look like a toggle and show contents (see README for [upgrade steps](https://github.com/liquidlight/typo3-module-data-listing#upgrading-to-120))
+
+# 1.2.0
+
+**17th February 2025**
+
+#### Feature
+
+- Upgrade DataTables to 2.x (see README for [upgrade steps](https://github.com/liquidlight/typo3-module-data-listing#upgrading-to-120))
+
+#### Fix
+
+- Load the ext path correctly
+- Check if user ID is in the group before processing
+
+#### Refactor
+
+- Lots of code tidy-up, refactoring and indenting correctly
+
 # 1.1.0
 
 **22nd November 2023**
