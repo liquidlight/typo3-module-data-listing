@@ -24,7 +24,6 @@ class FeUsersController extends DatatableController
 	/**
 	 * Table
 	 *
-	 * @var array
 	 * @access protected
 	 */
 	protected string $table = 'fe_users';
@@ -63,7 +62,7 @@ class FeUsersController extends DatatableController
 	 *
 	 * @var string
 	 */
-	protected string $moduleName = 'tx_moduledatalisting';
+	protected string $configurationName = 'fe_users';
 
 	/**
 	 * Init view
@@ -130,6 +129,10 @@ class FeUsersController extends DatatableController
 
 			// Format unix timestamp fields
 			foreach ($this->dateColumns as $dateColumn) {
+				if (!isset($row[$dateColumn])) {
+					continue;
+				}
+
 				$row[$dateColumn] = $row[$dateColumn] ? date('d/m/Y H:i:s', $row[$dateColumn]) : 'N/A';
 			}
 
@@ -154,8 +157,8 @@ class FeUsersController extends DatatableController
 	 */
 	public function indexAction(): void
 	{
+		parent::indexAction();
 		$this->view->assignMultiple([
-			'headers' => array_values(parent::getHeaders($this->headers)),
 			'groups' => $this->getUsergroups(),
 		]);
 	}
@@ -165,10 +168,7 @@ class FeUsersController extends DatatableController
 	 */
 	private function getUsergroups(): array
 	{
-		$connection = $this->getConnection('fe_groups');
-		$queryBuilder = $connection->createQueryBuilder();
-
-		$usergroups = $queryBuilder
+		$usergroups = $this->getNewQueryBuilder('fe_groups')
 			->select('title', 'uid')
 			->from('fe_groups')
 			->execute()
@@ -189,8 +189,7 @@ class FeUsersController extends DatatableController
 			return $cache[$usergroupUid];
 		}
 
-		$connection = $this->getConnection('fe_groups');
-		$queryBuilder = $connection->createQueryBuilder();
+		$queryBuilder = $this->getNewQueryBuilder();
 
 		$usergroup = $queryBuilder
 			->select('title')
