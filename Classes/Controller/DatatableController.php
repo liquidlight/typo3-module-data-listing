@@ -298,52 +298,29 @@ abstract class DatatableController extends ActionController
 	protected function applyFilters(QueryBuilder $query, array $params): self
 	{
 		foreach ($params['filters'] ?? [] as $field => $filter) {
-			// If filtering by usergroup
-			// then use an IN query
-			// else use equals
-			if (is_array($filter) && (count($filter) > 1)) {
-				foreach ($filter as $value) {
-					if ($field === 'usergroup') {
-						$query
-							->andWhere(
-								$query->expr()->or($query->expr()->like(
-									$field,
-									$query->createNamedParameter($query->escapeLikeWildcards($value) . ',%')
-								), $query->expr()->like(
-									$field,
-									$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value) . ',%')
-								), $query->expr()->like(
-									$field,
-									$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value))
-								)),
-							)
-						;
-					} else {
-						$query
-							->andWhere(
-								$query->expr()->eq(
-									$field,
-									$query->createNamedParameter(
-										$value
-									)
-								)
-							)
-						;
-					}
-				}
-			} else {
-				$query
-					->andWhere(
-						$query->expr()->eq(
-							$field,
-							$query->createNamedParameter(
-								is_array($filter) ? $filter[0] : $filter
-							)
-						)
-					)
-				;
+			$values = array_filter(
+				is_array($filter) ? $filter : [$filter],
+				static fn ($value): bool => (string)$value !== '',
+			);
+
+			if (!$values) {
+				continue;
 			}
+
+			$expressions = [];
+
+			foreach ($values as $value) {
+				$expressions[] = $field === 'usergroup' ?
+					// `usergroup` holds a comma separated list of uids, so membership
+					// has to be tested with FIND_IN_SET rather than equality
+					$query->expr()->inSet($field, $query->createNamedParameter($value)) :
+					$query->expr()->eq($field, $query->createNamedParameter($value));
+			}
+
+			// Several checked values for one filter mean "any of these"
+			$query->andWhere($query->expr()->or(...$expressions));
 		}
+
 		return $this;
 	}
 

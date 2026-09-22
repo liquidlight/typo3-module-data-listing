@@ -71,7 +71,20 @@ class FeUsersController extends DatatableController
 	 *
 	 * @var ?string
 	 */
-	protected $jsNamespace = 'TYPO3/CMS/Cpd/AnnualSubmissionsDataTable';
+	protected $jsNamespace = 'TYPO3/CMS/ModuleDataListing/FeUsersDataTable';
+
+	/**
+	 * Default action: index
+	 *
+	 * Assign the usergroups before delegating: the parent renders and returns
+	 * the response, so anything assigned afterwards would never reach the view.
+	 */
+	public function indexAction(): ResponseInterface
+	{
+		$this->view->assign('groups', $this->getUsergroups());
+
+		return parent::indexAction();
+	}
 
 	/**
 	 * Render DataTables ajax call

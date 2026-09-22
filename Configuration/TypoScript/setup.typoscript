@@ -12,18 +12,4 @@ module.tx_moduledatalisting {
 			searchableColumns := addToList(fe_users.first_name,fe_users.last_name,fe_users.username,fe_users.email,fe_users.uid)
 		}
 	}
-
-	view {
-		templateRootPaths.10 = EXT:module_data_listing/Resources/Private/Backend/Templates/
-		layoutRootPaths.10 = EXT:module_data_listing/Resources/Private/Backend/Layouts/
-		partialRootPaths.10 = EXT:module_data_listing/Resources/Private/Backend/Partials/
-	}
-}
-
-module.tx_moduledatalisting_datalisting_feusers {
-	view {
-		templateRootPaths.20 = EXT:module_data_listing/Resources/Private/Backend/Templates/Dave/
-		layoutRootPaths.20 = EXT:module_data_listing/Resources/Private/Backend/Layouts/Dave/
-		partialRootPaths.20 = EXT:module_data_listing/Resources/Private/Backend/Partials/Dave/
-	}
 }
