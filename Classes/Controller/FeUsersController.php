@@ -70,11 +70,11 @@ class FeUsersController extends DatatableController
 	protected string $templateName = 'FeUsers/Index';
 
 	/**
-	 * JS file namespace
+	 * ES module specifier of the JavaScript for this listing
 	 *
 	 * @var ?string
 	 */
-	protected $jsNamespace = 'TYPO3/CMS/ModuleDataListing/FeUsersDataTable';
+	protected $jsNamespace = '@liquidlight/module-data-listing/FeUsersDataTable.js';
 
 	/**
 	 * Default action: index

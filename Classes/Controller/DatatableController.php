@@ -21,14 +21,13 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
 use TYPO3\CMS\Core\Page\PageRenderer;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 abstract class DatatableController extends ActionController
 {
 	/**
-	 * JS file namespace
+	 * ES module specifier of the JavaScript for this listing
 	 *
 	 * @var ?string
 	 */
@@ -84,39 +83,6 @@ abstract class DatatableController extends ActionController
 				$this->headers[$table . $column] = $label;
 			}
 		}
-	}
-
-	public function initializeView($view): void
-	{
-		$extPath = PathUtility::getPublicResourceWebPath('EXT:module_data_listing/Resources/Public');
-
-		$this->pageRenderer->addRequireJsConfiguration([
-			'paths' => [
-				'jquery' => $extPath . '/JavaScript/DataTables/jquery.min',
-				'datatables.net' => $extPath . '/JavaScript/DataTables/jquery.dataTables.min',
-				'datatables.net-buttons' => $extPath . '/JavaScript/DataTables/dataTables.buttons.min',
-				'datatables.net-buttons-print' => $extPath . '/JavaScript/DataTables/buttons.print.min',
-				'datatables.net-buttons-html5' => $extPath . '/JavaScript/DataTables/buttons.html5.min',
-			],
-			'shim' => [
-				'datatables.net' => [
-					'jquery',
-					'exports' => 'datatables.net',
-				],
-				'datatables.net-buttons' => [
-					'datatables.net',
-					'exports' => 'datatables.net-buttons',
-				],
-				'datatables.net-buttons-print' => [
-					'datatables.net-buttons',
-					'exports' => 'datatables.net-buttons-print',
-				],
-				'datatables.net-buttons-html5' => [
-					'datatables.net-buttons',
-					'exports' => 'datatables.net-buttons-html5',
-				],
-			],
-		]);
 	}
 
 	/**
@@ -376,7 +342,7 @@ abstract class DatatableController extends ActionController
 	public function indexAction(): ResponseInterface
 	{
 		if ($this->jsNamespace) {
-			$this->pageRenderer->loadRequireJsModule($this->jsNamespace);
+			$this->pageRenderer->loadJavaScriptModule($this->jsNamespace);
 		}
 
 		$this->getModuleTemplate()->assignMultiple([
