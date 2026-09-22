@@ -63,9 +63,7 @@ define([
 				],
 				classes: {
 					sLength: 'form-group',
-					sLengthSelect: 'form-control input-sm',
-					sFilter: 'form-group',
-					sFilterInput: 'form-control input-sm'
+					sFilter: 'form-group'
 				}
 			}
 		},

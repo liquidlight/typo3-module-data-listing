@@ -8,6 +8,3 @@ services:
   LiquidLight\ModuleDataListing\:
     resource: '../Classes/*'
     exclude: '../Classes/Domain/Model/*'
-
-  LiquidLight\ModuleDataListing\Controller\FeUsersController:
-    tags: ['backend.controller']

@@ -16,11 +16,9 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Routing\UriBuilder;
-use TYPO3\CMS\Core\Http\Response;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 #[AsController]
-
 class FeUsersController extends DatatableController
 {
 	/**
@@ -89,7 +87,7 @@ class FeUsersController extends DatatableController
 	/**
 	 * Render DataTables ajax call
 	 */
-	public function renderAjax(ServerRequestInterface $request): Response
+	public function renderAjax(ServerRequestInterface $request): ResponseInterface
 	{
 		$params = $request->getQueryParams();
 		$uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
@@ -104,7 +102,7 @@ class FeUsersController extends DatatableController
 		$data = [];
 		foreach ($tableData as $row) {
 			// Build the edit link
-			$returnUrl = $uriBuilder->buildUriFromRoutePath('/module/datalisting/feusers');
+			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_feusers');
 
 			$uriParameters = [
 				'edit' => [
@@ -154,7 +152,7 @@ class FeUsersController extends DatatableController
 			'data' => $data,
 		];
 
-		return $this->jsonResponse(json_encode($return));
+		return $this->jsonResponse(json_encode($return, JSON_THROW_ON_ERROR));
 	}
 
 	/**
@@ -163,7 +161,10 @@ class FeUsersController extends DatatableController
 	private function getUsergroups(): array
 	{
 		$usergroups = $this->getNewQueryBuilder('fe_groups')
-			->select('title', 'uid')->from('fe_groups')->executeQuery()->fetchAllAssociative()
+			->select('title', 'uid')
+			->from('fe_groups')
+			->executeQuery()
+			->fetchAllAssociative()
 		;
 
 		return $usergroups;
@@ -180,11 +181,14 @@ class FeUsersController extends DatatableController
 			return $cache[$usergroupUid];
 		}
 
-		$queryBuilder = $this->getNewQueryBuilder();
+		$queryBuilder = $this->getNewQueryBuilder('fe_groups');
 
 		$usergroup = $queryBuilder
 			->select('title')
-			->from('fe_groups')->where($queryBuilder->expr()->eq('uid', $usergroupUid))->executeQuery()->fetchAllAssociative()
+			->from('fe_groups')
+			->where($queryBuilder->expr()->eq('uid', $usergroupUid))
+			->executeQuery()
+			->fetchAllAssociative()
 		;
 
 		if (!$usergroup) {

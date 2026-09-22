@@ -14,7 +14,6 @@ namespace LiquidLight\ModuleDataListing\Controller;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
-use TYPO3\CMS\Backend\Attribute\AsController;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -24,8 +23,6 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Utility\PathUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
-
-#[AsController]
 
 abstract class DatatableController extends ActionController
 {
@@ -54,8 +51,6 @@ abstract class DatatableController extends ActionController
 		protected ModuleTemplateFactory $moduleTemplateFactory,
 		protected PageRenderer $pageRenderer
 	) {
-		$this->connectionPool = $connectionPool;
-
 		$setup = $configurationManagerInterface->getConfiguration(
 			ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
 		);
@@ -64,7 +59,7 @@ abstract class DatatableController extends ActionController
 			throw new Exception(sprintf(
 				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
 				$this->configurationName,
-			), 3669489497);
+			), 1790069492);
 		}
 
 		$this->table = $configuration['table'] ?? $this->table;
@@ -142,7 +137,7 @@ abstract class DatatableController extends ActionController
 		// Re-apply restrictions
 		$this
 			->applyDeleteFilter($query, $this->table, $this->table)
-			->applyJoins($query, $query)
+			->applyJoins($query)
 			->applyFilters($query, $params)
 			->applySearch($query, $params)
 		;
@@ -186,8 +181,8 @@ abstract class DatatableController extends ActionController
 		}
 
 		$data = $query
-			->execute()
-			->fetchAll()
+			->executeQuery()
+			->fetchAllAssociative()
 		;
 
 		return $data;
@@ -202,7 +197,7 @@ abstract class DatatableController extends ActionController
 
 		$query->count($this->table . '.uid');
 
-		$count = $query->executeQuery()->fetchOne(0);
+		$count = $query->executeQuery()->fetchOne();
 
 		return (int)$count;
 	}
@@ -213,23 +208,26 @@ abstract class DatatableController extends ActionController
 	protected function applySearch(QueryBuilder $query, array $params): self
 	{
 		if ($params['search']['value']) {
-			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns);
+			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns, true);
 
-			$searchQuery = $query->expr()->or();
+			$expressions = [];
+
 			foreach ($searchableColumns as $field) {
 				$param = $query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%');
 
-				$expression = isset($this->columnSelectOverrides[$field]) ?
+				$expressions[] = isset($this->columnSelectOverrides[$field]) ?
 					// If we have a column override we need to filter on that
 					// override and not the field (alias) itself
 					sprintf('%s LIKE %s', $this->columnSelectOverrides[$field], $param) :
 					// Otherwise we can filter directly off the field itself
 					$query->expr()->like($field, $param);
-
-				$searchQuery = $searchQuery->with($expression);
 			}
 
-			$query->andWhere($searchQuery);
+			// An empty `searchableColumns` would otherwise build a composite
+			// expression with no parts, which renders as an empty WHERE
+			if ($expressions) {
+				$query->andWhere($query->expr()->or(...$expressions));
+			}
 		}
 
 		return $this;
@@ -253,7 +251,7 @@ abstract class DatatableController extends ActionController
 						'Expected join definition %s to contain %s',
 						$alias,
 						$property
-					), 1922011475);
+					), 1790069493);
 				}
 			}
 
@@ -267,7 +265,7 @@ abstract class DatatableController extends ActionController
 					'Unexpected join definition %s has type of %s',
 					$alias,
 					$type,
-				), 3841052666);
+				), 1790069494);
 			}
 
 			// Perform the join
