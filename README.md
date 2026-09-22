@@ -81,9 +81,9 @@ The Module Data Listing package comes with several pre-packaged icons you can us
 
 ### Usage
 
-To use an icon, use the `iconIdentifier` from the table below when using the `registerModule` method.
+To use an icon, set the `iconIdentifier` from the table below on your module in `Configuration/Backend/Modules.php`.
 
-The `module-listing-users` icon is used with the default `tx_module_data_listing_feusers` module.
+The `module-listing-users` icon is used with the default `datalisting_feusers` module.
 
 ### Available Icons
 
@@ -164,6 +164,10 @@ module.[tx_myextension] {
 }
 ```
 
+> [!Important]
+> The `view` block above applies to version 2 only. From version 3 templates are
+> overridden with page TSconfig — see [Upgrading from v2 to v3](#upgrading-from-v2-to-v3).
+
 > [!Note]
 > The `FeUsersController` class is no longer tied to the "default" configuration, but rather its own. located in `module.tx_moduledatalisting.configuration.fe_users` it still inherits from the `module.tx_moduledatalisting.configuration.default`, as is recommended in the block above.
 
@@ -205,3 +209,164 @@ The following in a breakdown of the class properties and their respective typosc
 
 > [!Note]
 > When performing a search on any fields that are defined in `$columnSelectOverrides`, the WHERE condition will include the overridden SQL. This prevents an alias from being used in the case of a complex SQL expression.
+
+## Upgrading from v2 to v3
+
+Version 3 supports TYPO3 v12 and drops v11. Every change below affects extensions that register their own listings by extending `DatatableController`.
+
+### `indexAction()` returns a response
+
+`indexAction()` changed from `: void` to `: ResponseInterface`. Any subclass overriding it with the old signature will fatal on upgrade, so this is the first thing to fix.
+
+The parent now renders and returns, so assign your variables *before* delegating — anything assigned afterwards never reaches the view.
+
+```diff
+-	public function indexAction(): void
++	public function indexAction(): ResponseInterface
+ 	{
+-		parent::indexAction();
+-		$this->view->assignMultiple([
+-			'groups' => $this->getUsergroups(),
+-		]);
++		$this->getModuleTemplate()->assign('groups', $this->getUsergroups());
++
++		return parent::indexAction();
+ 	}
+```
+
+### Assign to the module template, not the view
+
+Rendering goes through `ModuleTemplate::renderResponse()`, since the `setContent()` and `renderContent()` methods it replaces are removed in TYPO3 v13. Reach the view with `$this->getModuleTemplate()`, which accepts the same `assign()` and `assignMultiple()` calls as before.
+
+### New `$templateName` property
+
+Declare the template your listing renders, relative to `Resources/Private/Templates`:
+
+```php
+protected string $templateName = 'MyRecords/Index';
+```
+
+Your template should use the core `Module` layout so it picks up the doc header and flash messages:
+
+```html
+<html xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers" data-namespace-typo3-fluid="true">
+
+<f:layout name="Module" />
+
+<f:section name="Content">
+	<f:render partial="Table" arguments="{_all}" />
+</f:section>
+
+</html>
+```
+
+Register any stylesheets through the page renderer rather than a `head` section:
+
+```php
+$this->pageRenderer->addCssFile('EXT:my_extension/Resources/Public/Css/MyRecords.css');
+```
+
+### Template overrides move to page TSconfig
+
+`module.tx_moduledatalisting.view` is no longer read. Template paths now come from the package directory plus page TSconfig, keyed by composer package name:
+
+```
+templates.liquidlight/module-data-listing.10 = my-vendor/my-extension:Resources/Private/TemplateOverrides
+```
+
+The override directory then holds `Templates/`, `Layouts/` and `Partials/` subdirectories.
+
+### JavaScript is loaded as ES modules
+
+RequireJS is gone in TYPO3 v13, so `$jsNamespace` is now an ES module specifier rather than a RequireJS path:
+
+```diff
+-	protected $jsNamespace = 'TYPO3/CMS/MyExtension/MyRecordsDataTable';
++	protected $jsNamespace = '@my-vendor/my-extension/MyRecordsDataTable.js';
+```
+
+Declare the specifier in `Configuration/JavaScriptModules.php`:
+
+```php
+<?php
+
+return [
+	'dependencies' => [
+		'core',
+		'backend',
+		'module_data_listing',
+	],
+	'imports' => [
+		'@my-vendor/my-extension/' => 'EXT:my_extension/Resources/Public/JavaScript/',
+	],
+];
+```
+
+Your JavaScript becomes a module. `jQuery` is provided by EXT:core, so there is no need to bundle it:
+
+```js
+import ModuleDataListing from '@liquidlight/module-data-listing/ModuleDataListing.js';
+
+ModuleDataListing.config({
+	storageKey: 'MyRecords',
+	ajaxUrl: TYPO3.settings.ajaxUrls['my_ajax_route']
+});
+
+ModuleDataListing.dataTable.init();
+ModuleDataListing.filters.init();
+```
+
+ES modules are deferred, so a `$(document).ready()` wrapper is no longer needed.
+
+### Stop overriding `initializeView()`
+
+`initializeView()` previously carried the RequireJS configuration and has been removed. Set `$jsNamespace` instead.
+
+### Register modules in `Configuration/Backend/Modules.php`
+
+Module registration moves out of `ext_tables.php`. The `$GLOBALS['TBE_MODULES']` reordering has no equivalent — use `position` instead.
+
+```php
+<?php
+
+return [
+	'datalisting' => [
+		'access' => 'user',
+		'path' => '/module/datalisting',
+		'iconIdentifier' => 'modulegroup-datalisting',
+		'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
+		'position' => [
+			'after' => 'file',
+		],
+	],
+	'datalisting_myrecords' => [
+		'parent' => 'datalisting',
+		'access' => 'user',
+		'iconIdentifier' => 'module-listing-report',
+		'labels' => 'LLL:EXT:my_extension/Resources/Private/Language/locallang_mod_myrecords.xlf',
+		'extensionName' => 'MyExtension',
+		'controllerActions' => [
+			\MyVendor\MyExtension\Controller\MyRecordsController::class => [
+				'index',
+			],
+		],
+	],
+];
+```
+
+`access` no longer accepts `group`, so `'user,group'` becomes `'user'`.
+
+### Controllers need registering
+
+Add the `#[AsController]` attribute to your controller and make sure your `Configuration/Services.yaml` autoconfigures it:
+
+```php
+use TYPO3\CMS\Backend\Attribute\AsController;
+
+#[AsController]
+class MyRecordsController extends DatatableController
+```
+
+### Filters match differently
+
+Comma separated relation columns such as `usergroup` are matched with `FIND_IN_SET` rather than `LIKE`, so records belonging to more than one related record are now found. Several checked values for one filter mean "any of these" rather than "all of these".
