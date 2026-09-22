@@ -510,7 +510,7 @@ class DatatableControllerTest extends UnitTestCase
 			],
 		]));
 
-		$sql = $controller->callPrepareQuery(['search' => ['value' => '']])->getSQL();
+		$sql = $controller->callPrepareQuery(['search' => ['value' => '']])->select('uid')->getSQL();
 
 		// IS NULL is the discriminator: only applyDeleteFilter emits it, so
 		// asserting on "deleted" alone would pass on the DeletedRestriction's
