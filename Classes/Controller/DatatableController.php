@@ -12,22 +12,35 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use Exception;
+use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
-use TYPO3\CMS\Core\Utility\PathUtility;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Backend\Template\ModuleTemplate;
+use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Extbase\Object\ObjectManager;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use TYPO3\CMS\Backend\View\BackendTemplateView;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 use TYPO3\CMS\Core\Database\Query\Restriction\DeletedRestriction;
+use TYPO3\CMS\Core\Page\PageRenderer;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
+use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 abstract class DatatableController extends ActionController
 {
+	/**
+	 * ES module specifier of the JavaScript for this listing
+	 *
+	 * @var ?string
+	 */
+	protected $jsNamespace = null;
+
 	protected string $configurationName;
+
+	/**
+	 * Template to render, relative to Resources/Private/Templates
+	 */
+	protected string $templateName;
+
+	protected ?ModuleTemplate $moduleTemplate = null;
 
 	protected string $table;
 
@@ -39,14 +52,12 @@ abstract class DatatableController extends ActionController
 
 	protected array $joins;
 
-	protected $defaultViewObjectName = BackendTemplateView::class;
-
-	protected ConnectionPool $connectionPool;
-
-	public function __construct(ConfigurationManagerInterface $configurationManagerInterface, ConnectionPool $connectionPool)
-	{
-		$this->connectionPool = $connectionPool;
-
+	public function __construct(
+		ConfigurationManagerInterface $configurationManagerInterface,
+		protected ConnectionPool $connectionPool,
+		protected ModuleTemplateFactory $moduleTemplateFactory,
+		protected PageRenderer $pageRenderer
+	) {
 		$setup = $configurationManagerInterface->getConfiguration(
 			ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT
 		);
@@ -55,14 +66,14 @@ abstract class DatatableController extends ActionController
 			throw new Exception(sprintf(
 				'Missing expected SetupTS definition for module.tx_moduledatalisting.configuration.%s',
 				$this->configurationName,
-			));
+			), 1790069492);
 		}
 
 		$this->table = $configuration['table'] ?? $this->table;
 		$this->headers = $configuration['headers.'] ?? $this->headers ?? [];
 		$this->columnSelectOverrides = $configuration['columnSelectOverrides.'] ?? $this->columnSelectOverrides ?? [];
 		$this->joins = $configuration['joins.'] ?? $this->joins ?? [];
-		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? [];
+		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? '';
 
 		foreach ($configuration['additionalColumns.'] ?? [] as $table => $columns) {
 			foreach ($columns as $column => $label) {
@@ -71,35 +82,6 @@ abstract class DatatableController extends ActionController
 				}
 				$this->headers[$table . $column] = $label;
 			}
-		}
-
-	}
-
-	/**
-	 * Init view and load JS
-	 */
-	public function initializeView(ViewInterface $view): void
-	{
-		/** @var BackendTemplateView $view */
-		parent::initializeView($view);
-
-		$extPath = '/' . trim(PathUtility::stripPathSitePrefix(ExtensionManagementUtility::extPath('module_data_listing')), '/');
-
-		if ($view instanceof BackendTemplateView) {
-			$view->getModuleTemplate()->getPageRenderer()->addRequireJsConfiguration([
-				'paths' => [
-					'datatables.net' => $extPath . '/Resources/Public/JavaScript/DataTables/jquery.dataTables.min',
-					'datatables.net-buttons' => $extPath . '/Resources/Public/JavaScript/DataTables/dataTables.buttons.min',
-					'datatables.net-buttons-print' => $extPath . '/Resources/Public/JavaScript/DataTables/buttons.print.min',
-					'datatables.net-buttons-html5' => $extPath . '/Resources/Public/JavaScript/DataTables/buttons.html5.min',
-				],
-				'shim' => [
-					'datatables.net' => ['jquery', 'exports' => 'datatables.net'],
-					'datatables.net-buttons' => ['datatables.net', 'exports' => 'datatables.net-buttons'],
-					'datatables.net-buttons-print' => ['datatables.net-buttons', 'exports' => 'datatables.net-buttons-print'],
-					'datatables.net-buttons-html5' => ['datatables.net-buttons', 'exports' => 'datatables.net-buttons-html5'],
-				],
-			]);
 		}
 	}
 
@@ -129,7 +111,7 @@ abstract class DatatableController extends ActionController
 		// Re-apply restrictions
 		$this
 			->applyDeleteFilter($query, $this->table, $this->table)
-			->applyJoins($query, $query)
+			->applyJoins($query)
 			->applyFilters($query, $params)
 			->applySearch($query, $params)
 		;
@@ -173,8 +155,8 @@ abstract class DatatableController extends ActionController
 		}
 
 		$data = $query
-			->execute()
-			->fetchAll()
+			->executeQuery()
+			->fetchAllAssociative()
 		;
 
 		return $data;
@@ -189,10 +171,7 @@ abstract class DatatableController extends ActionController
 
 		$query->count($this->table . '.uid');
 
-		$count = $query
-			->executeQuery()
-			->fetchColumn(0)
-		;
+		$count = $query->executeQuery()->fetchOne();
 
 		return (int)$count;
 	}
@@ -203,23 +182,26 @@ abstract class DatatableController extends ActionController
 	protected function applySearch(QueryBuilder $query, array $params): self
 	{
 		if ($params['search']['value']) {
-			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns);
+			$searchableColumns = GeneralUtility::trimExplode(',', $this->searchableColumns, true);
 
-			$searchQuery = $query->expr()->orX();
+			$expressions = [];
+
 			foreach ($searchableColumns as $field) {
 				$param = $query->createNamedParameter('%' . $query->escapeLikeWildcards($params['search']['value']) . '%');
 
-				$expression = isset($this->columnSelectOverrides[$field]) ?
+				$expressions[] = isset($this->columnSelectOverrides[$field]) ?
 					// If we have a column override we need to filter on that
 					// override and not the field (alias) itself
 					sprintf('%s LIKE %s', $this->columnSelectOverrides[$field], $param) :
 					// Otherwise we can filter directly off the field itself
 					$query->expr()->like($field, $param);
-
-				$searchQuery->add($expression);
 			}
 
-			$query->andWhere($searchQuery);
+			// An empty `searchableColumns` would otherwise build a composite
+			// expression with no parts, which renders as an empty WHERE
+			if ($expressions) {
+				$query->andWhere($query->expr()->or(...$expressions));
+			}
 		}
 
 		return $this;
@@ -243,7 +225,7 @@ abstract class DatatableController extends ActionController
 						'Expected join definition %s to contain %s',
 						$alias,
 						$property
-					));
+					), 1790069493);
 				}
 			}
 
@@ -257,7 +239,7 @@ abstract class DatatableController extends ActionController
 					'Unexpected join definition %s has type of %s',
 					$alias,
 					$type,
-				));
+				), 1790069494);
 			}
 
 			// Perform the join
@@ -274,11 +256,8 @@ abstract class DatatableController extends ActionController
 		// Exclude anything that is deleted
 		if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
 			$deleteFiled = $alias . '.' . $deleteFiled;
-			$query->where(
-				$query->expr()->orX(
-					$query->expr()->eq($deleteFiled, 0),
-					$query->expr()->isNull($deleteFiled),
-				),
+			$query->andWhere(
+				$query->expr()->or($query->expr()->eq($deleteFiled, 0), $query->expr()->isNull($deleteFiled)),
 			);
 		}
 
@@ -291,56 +270,29 @@ abstract class DatatableController extends ActionController
 	protected function applyFilters(QueryBuilder $query, array $params): self
 	{
 		foreach ($params['filters'] ?? [] as $field => $filter) {
-			// If filtering by usergroup
-			// then use an IN query
-			// else use equals
-			if (is_array($filter) && (count($filter) > 1)) {
-				foreach ($filter as $value) {
-					if ($field === 'usergroup') {
-						$query
-							->andWhere(
-								$query->expr()->orX(
-									$query->expr()->like(
-										$field,
-										$query->createNamedParameter($query->escapeLikeWildcards($value) . ',%')
-									),
-									$query->expr()->like(
-										$field,
-										$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value) . ',%')
-									),
-									$query->expr()->like(
-										$field,
-										$query->createNamedParameter('%,' . $query->escapeLikeWildcards($value))
-									)
-								),
-							)
-						;
-					} else {
-						$query
-							->andWhere(
-								$query->expr()->eq(
-									$field,
-									$query->createNamedParameter(
-										$value
-									)
-								)
-							)
-						;
-					}
-				}
-			} else {
-				$query
-					->andWhere(
-						$query->expr()->eq(
-							$field,
-							$query->createNamedParameter(
-								is_array($filter) ? $filter[0] : $filter
-							)
-						)
-					)
-				;
+			$values = array_filter(
+				is_array($filter) ? $filter : [$filter],
+				static fn ($value): bool => (string)$value !== '',
+			);
+
+			if (!$values) {
+				continue;
 			}
+
+			$expressions = [];
+
+			foreach ($values as $value) {
+				$expressions[] = $field === 'usergroup' ?
+					// `usergroup` holds a comma separated list of uids, so membership
+					// has to be tested with FIND_IN_SET rather than equality
+					$query->expr()->inSet($field, $query->createNamedParameter($value)) :
+					$query->expr()->eq($field, $query->createNamedParameter($value));
+			}
+
+			// Several checked values for one filter mean "any of these"
+			$query->andWhere($query->expr()->or(...$expressions));
 		}
+
 		return $this;
 	}
 
@@ -387,10 +339,34 @@ abstract class DatatableController extends ActionController
 	/**
 	 * Default action: index
 	 */
-	public function indexAction(): void
+	public function indexAction(): ResponseInterface
 	{
-		$this->view->assignMultiple([
+		if ($this->jsNamespace) {
+			$this->pageRenderer->loadJavaScriptModule($this->jsNamespace);
+		}
+
+		$this->getModuleTemplate()->assignMultiple([
 			'headers' => array_values($this->headers),
 		]);
+
+		return $this->renderHtml();
+	}
+
+	/**
+	 * The module template doubles as the view
+	 *
+	 * Assign to it from an action, then call renderHtml() to render.
+	 */
+	protected function getModuleTemplate(): ModuleTemplate
+	{
+		return $this->moduleTemplate ??= $this->moduleTemplateFactory->create($this->request);
+	}
+
+	/**
+	 * Render the view
+	 */
+	protected function renderHtml(): ResponseInterface
+	{
+		return $this->getModuleTemplate()->renderResponse($this->templateName);
 	}
 }

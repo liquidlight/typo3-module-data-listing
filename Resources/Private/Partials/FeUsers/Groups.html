@@ -7,7 +7,7 @@
 	<div class="collapse in show" data-state="expanded" id="recordlist-pages">
 		<div class="panel-body">
 			<div class="form-inline form-inline-spaced">
-				<div class="form-group usergroups">
+				<div class="form-group usergroups" data-mdl-filter="usergroup">
 					<div>
 					<f:for each="{groups}" as="group">
 						<label>
@@ -16,7 +16,8 @@
 						</label>
 					</f:for>
 					</div>
-					<button type="button" class="searchUsergroups btn btn-info btn-sm">Filter</button>
+					<button type="button" class="mdl-filter-search btn btn-info btn-sm">Filter</button>
+					<button type="button" class="mdl-filter-clear btn btn-default btn-sm">Clear</button>
 				</div>
 			</div>
 		</div>

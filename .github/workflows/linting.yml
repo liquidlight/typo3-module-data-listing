@@ -10,3 +10,13 @@ jobs:
       uses: docker://oskarstark/php-cs-fixer-ga
       with:
         args: --config=.project.php_cs --diff --dry-run
+
+  php-syntax:
+    name: PHP syntax
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Lint PHP files
+      run: find Classes Configuration Tests -name '*.php' -print0 | xargs -0 -n1 php -l
+    - name: Validate composer.json
+      run: composer validate --no-check-lock

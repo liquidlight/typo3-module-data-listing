@@ -12,13 +12,13 @@
 namespace LiquidLight\ModuleDataListing\Controller;
 
 use LiquidLight\ModuleDataListing\Controller\DatatableController;
-use TYPO3\CMS\Backend\View\BackendTemplateView;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Backend\Routing\UriBuilder;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use TYPO3\CMS\Core\Http\Response;
+use TYPO3\CMS\Backend\Attribute\AsController;
+use TYPO3\CMS\Backend\Routing\UriBuilder;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
+#[AsController]
 class FeUsersController extends DatatableController
 {
 	/**
@@ -65,23 +65,36 @@ class FeUsersController extends DatatableController
 	protected string $configurationName = 'fe_users';
 
 	/**
-	 * Init view
+	 * Template
 	 */
-	public function initializeView(ViewInterface $view): void
-	{
-		/** @var BackendTemplateView $view */
-		parent::initializeView($view);
+	protected string $templateName = 'FeUsers/Index';
 
-		// Load the JS
-		if ($view instanceof BackendTemplateView) {
-			$view->getModuleTemplate()->getPageRenderer()->loadRequireJsModule('TYPO3/CMS/ModuleDataListing/FeUsersDataTable');
-		}
+	/**
+	 * ES module specifier of the JavaScript for this listing
+	 *
+	 * @var ?string
+	 */
+	protected $jsNamespace = '@liquidlight/module-data-listing/FeUsersDataTable.js';
+
+	/**
+	 * Default action: index
+	 *
+	 * Assign the usergroups before delegating: the parent renders and returns
+	 * the response, so anything assigned afterwards would never reach the view.
+	 */
+	public function indexAction(): ResponseInterface
+	{
+		$this->pageRenderer->addCssFile('EXT:module_data_listing/Resources/Public/Css/FeUsersDataTable.css');
+
+		$this->getModuleTemplate()->assign('groups', $this->getUsergroups());
+
+		return parent::indexAction();
 	}
 
 	/**
 	 * Render DataTables ajax call
 	 */
-	public function renderAjax(ServerRequestInterface $request): Response
+	public function renderAjax(ServerRequestInterface $request): ResponseInterface
 	{
 		$params = $request->getQueryParams();
 		$uriBuilder = GeneralUtility::makeInstance(UriBuilder::class);
@@ -96,7 +109,7 @@ class FeUsersController extends DatatableController
 		$data = [];
 		foreach ($tableData as $row) {
 			// Build the edit link
-			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_ModuleDataListingTxModuleDataListingFeusers');
+			$returnUrl = $uriBuilder->buildUriFromRoute('datalisting_feusers');
 
 			$uriParameters = [
 				'edit' => [
@@ -140,27 +153,13 @@ class FeUsersController extends DatatableController
 		}
 
 		$return = [
-			"draw" => $params['draw'],
-			"recordsTotal" => $count,
-			"recordsFiltered" => $count,
-			"data" => $data,
+			'draw' => $params['draw'],
+			'recordsTotal' => $count,
+			'recordsFiltered' => $count,
+			'data' => $data,
 		];
-		$response = new Response();
 
-		$response->getBody()->write(json_encode($return));
-
-		return $response;
-	}
-
-	/**
-	 * Default action: index
-	 */
-	public function indexAction(): void
-	{
-		parent::indexAction();
-		$this->view->assignMultiple([
-			'groups' => $this->getUsergroups(),
-		]);
+		return $this->jsonResponse(json_encode($return, JSON_THROW_ON_ERROR));
 	}
 
 	/**
@@ -171,8 +170,8 @@ class FeUsersController extends DatatableController
 		$usergroups = $this->getNewQueryBuilder('fe_groups')
 			->select('title', 'uid')
 			->from('fe_groups')
-			->execute()
-			->fetchAll()
+			->executeQuery()
+			->fetchAllAssociative()
 		;
 
 		return $usergroups;
@@ -189,16 +188,14 @@ class FeUsersController extends DatatableController
 			return $cache[$usergroupUid];
 		}
 
-		$queryBuilder = $this->getNewQueryBuilder();
+		$queryBuilder = $this->getNewQueryBuilder('fe_groups');
 
 		$usergroup = $queryBuilder
 			->select('title')
 			->from('fe_groups')
-			->where(
-				$queryBuilder->expr()->eq('uid', $usergroupUid)
-			)
-			->execute()
-			->fetchAll()
+			->where($queryBuilder->expr()->eq('uid', $usergroupUid))
+			->executeQuery()
+			->fetchAllAssociative()
 		;
 
 		if (!$usergroup) {

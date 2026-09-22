@@ -1,0 +1,25 @@
+name: tests
+on: [push]
+jobs:
+  phpunit:
+    name: PHPUnit
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.2', '8.3']
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ matrix.php }}
+        coverage: none
+    # TYPO3 12.4 has moved to ELTS, so the last public release still carries
+    # advisories that are only fixed for ELTS subscribers and composer would
+    # otherwise refuse to install anything. Kept to this step rather than
+    # composer.json so advisories stay visible to anyone cloning the extension.
+    - name: Install dependencies
+      run: composer install --no-interaction --no-progress --no-blocking
+    - name: Unit tests
+      run: composer test-unit
