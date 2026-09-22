@@ -14,6 +14,7 @@ namespace LiquidLight\ModuleDataListing\Controller;
 use Exception;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
+use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
@@ -34,6 +35,13 @@ abstract class DatatableController extends ActionController
 	protected $jsNamespace = null;
 
 	protected string $configurationName;
+
+	/**
+	 * Template to render, relative to Resources/Private/Templates
+	 */
+	protected string $templateName;
+
+	protected ?ModuleTemplate $moduleTemplate = null;
 
 	protected string $table;
 
@@ -371,7 +379,7 @@ abstract class DatatableController extends ActionController
 			$this->pageRenderer->loadRequireJsModule($this->jsNamespace);
 		}
 
-		$this->view->assignMultiple([
+		$this->getModuleTemplate()->assignMultiple([
 			'headers' => array_values($this->headers),
 		]);
 
@@ -379,13 +387,20 @@ abstract class DatatableController extends ActionController
 	}
 
 	/**
+	 * The module template doubles as the view
+	 *
+	 * Assign to it from an action, then call renderHtml() to render.
+	 */
+	protected function getModuleTemplate(): ModuleTemplate
+	{
+		return $this->moduleTemplate ??= $this->moduleTemplateFactory->create($this->request);
+	}
+
+	/**
 	 * Render the view
 	 */
 	protected function renderHtml(): ResponseInterface
 	{
-		$moduleTemplate = $this->moduleTemplateFactory->create($this->request);
-		$moduleTemplate->setContent($this->view->render());
-
-		return $this->htmlResponse($moduleTemplate->renderContent());
+		return $this->getModuleTemplate()->renderResponse($this->templateName);
 	}
 }

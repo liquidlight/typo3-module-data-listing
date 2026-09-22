@@ -65,6 +65,11 @@ class FeUsersController extends DatatableController
 	protected string $configurationName = 'fe_users';
 
 	/**
+	 * Template
+	 */
+	protected string $templateName = 'FeUsers/Index';
+
+	/**
 	 * JS file namespace
 	 *
 	 * @var ?string
@@ -79,7 +84,9 @@ class FeUsersController extends DatatableController
 	 */
 	public function indexAction(): ResponseInterface
 	{
-		$this->view->assign('groups', $this->getUsergroups());
+		$this->pageRenderer->addCssFile('EXT:module_data_listing/Resources/Public/Css/FeUsersDataTable.css');
+
+		$this->getModuleTemplate()->assign('groups', $this->getUsergroups());
 
 		return parent::indexAction();
 	}
