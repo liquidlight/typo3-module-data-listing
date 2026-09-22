@@ -15,4 +15,6 @@
 - Match usergroup membership with `FIND_IN_SET`, so users in more than one group are found
 - Treat several checked values for one filter as "any of these"
 - Search no longer builds an empty condition when `searchableColumns` is unset
+- Keep the delete filter on the base table when a join is configured, rather than replacing it
+- Fall back to an empty string when `searchableColumns` is unset, rather than raising a `TypeError`
 - Render a single document, with the stylesheet in the head

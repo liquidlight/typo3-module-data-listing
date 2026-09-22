@@ -73,7 +73,7 @@ abstract class DatatableController extends ActionController
 		$this->headers = $configuration['headers.'] ?? $this->headers ?? [];
 		$this->columnSelectOverrides = $configuration['columnSelectOverrides.'] ?? $this->columnSelectOverrides ?? [];
 		$this->joins = $configuration['joins.'] ?? $this->joins ?? [];
-		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? [];
+		$this->searchableColumns = $configuration['searchableColumns'] ?? $this->searchableColumns ?? '';
 
 		foreach ($configuration['additionalColumns.'] ?? [] as $table => $columns) {
 			foreach ($columns as $column => $label) {
@@ -256,7 +256,7 @@ abstract class DatatableController extends ActionController
 		// Exclude anything that is deleted
 		if ($deleteFiled = $GLOBALS['TCA'][$table]['ctrl']['delete'] ?? false) {
 			$deleteFiled = $alias . '.' . $deleteFiled;
-			$query->where(
+			$query->andWhere(
 				$query->expr()->or($query->expr()->eq($deleteFiled, 0), $query->expr()->isNull($deleteFiled)),
 			);
 		}
