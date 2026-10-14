@@ -1,3 +1,11 @@
+# 3.1.0
+
+**14th October 2026**
+
+#### Feature
+
+- Add TYPO3 v13 compatibility (#17)
+
 # 3.0.0
 
 **22nd September 2026**
