@@ -149,18 +149,18 @@ module.tx_moduledatalisting {
     configuration{
         [configuration_name] < .default
         [configuration_name] {
-    		...
+            ...
         }
     }
 }
 
 module.[tx_myextension] {
     view < module.tx_moduledatalisting.view
-	view {
-		templateRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Templates/
-		layoutRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Layouts/
-		partialRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Partials/
-	}
+    view {
+        templateRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Templates/
+        layoutRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Layouts/
+        partialRootPaths.1725047881 = EXT:[my_extension]/Resources/Private/Backend/Partials/
+    }
 }
 ```
 
@@ -175,18 +175,18 @@ Joins are defined and processed differently in version 2. The previous numerical
 
 ```
 module.tx_moduledatalisting {
-	configuration {
-		fe_user_groups < .fe_users
-		fe_user_groups {
-			joins {
-				fe_groups {
-					type = join
-					table = fe_groups
-					on = FIND_IN_SET(fe_groups.uid, fe_users.usergroup)
-				}
-			}
-		}
-	}
+    configuration {
+        fe_user_groups < .fe_users
+        fe_user_groups {
+            joins {
+                fe_groups {
+                    type = join
+                    table = fe_groups
+                    on = FIND_IN_SET(fe_groups.uid, fe_users.usergroup)
+                }
+            }
+        }
+    }
 }
 ```
 
@@ -223,7 +223,7 @@ The parent now renders and returns, so assign your variables *before* delegating
 ```diff
 -	public function indexAction(): void
 +	public function indexAction(): ResponseInterface
- 	{
+     {
 -		parent::indexAction();
 -		$this->view->assignMultiple([
 -			'groups' => $this->getUsergroups(),
@@ -231,7 +231,7 @@ The parent now renders and returns, so assign your variables *before* delegating
 +		$this->getModuleTemplate()->assign('groups', $this->getUsergroups());
 +
 +		return parent::indexAction();
- 	}
+     }
 ```
 
 ### Assign to the module template, not the view
@@ -254,7 +254,7 @@ Your template should use the core `Module` layout so it picks up the doc header 
 <f:layout name="Module" />
 
 <f:section name="Content">
-	<f:render partial="Table" arguments="{_all}" />
+    <f:render partial="Table" arguments="{_all}" />
 </f:section>
 
 </html>
@@ -291,14 +291,14 @@ Declare the specifier in `Configuration/JavaScriptModules.php`:
 <?php
 
 return [
-	'dependencies' => [
-		'core',
-		'backend',
-		'module_data_listing',
-	],
-	'imports' => [
-		'@my-vendor/my-extension/' => 'EXT:my_extension/Resources/Public/JavaScript/',
-	],
+    'dependencies' => [
+        'core',
+        'backend',
+        'module_data_listing',
+    ],
+    'imports' => [
+        '@my-vendor/my-extension/' => 'EXT:my_extension/Resources/Public/JavaScript/',
+    ],
 ];
 ```
 
@@ -308,8 +308,8 @@ Your JavaScript becomes a module. `jQuery` is provided by EXT:core, so there is 
 import ModuleDataListing from '@liquidlight/module-data-listing/ModuleDataListing.js';
 
 ModuleDataListing.config({
-	storageKey: 'MyRecords',
-	ajaxUrl: TYPO3.settings.ajaxUrls['my_ajax_route']
+    storageKey: 'MyRecords',
+    ajaxUrl: TYPO3.settings.ajaxUrls['my_ajax_route']
 });
 
 ModuleDataListing.dataTable.init();
@@ -330,27 +330,27 @@ Module registration moves out of `ext_tables.php`. The `$GLOBALS['TBE_MODULES']`
 <?php
 
 return [
-	'datalisting' => [
-		'access' => 'user',
-		'path' => '/module/datalisting',
-		'iconIdentifier' => 'modulegroup-datalisting',
-		'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
-		'position' => [
-			'after' => 'file',
-		],
-	],
-	'datalisting_myrecords' => [
-		'parent' => 'datalisting',
-		'access' => 'user',
-		'iconIdentifier' => 'module-listing-report',
-		'labels' => 'LLL:EXT:my_extension/Resources/Private/Language/locallang_mod_myrecords.xlf',
-		'extensionName' => 'MyExtension',
-		'controllerActions' => [
-			\MyVendor\MyExtension\Controller\MyRecordsController::class => [
-				'index',
-			],
-		],
-	],
+    'datalisting' => [
+        'access' => 'user',
+        'path' => '/module/datalisting',
+        'iconIdentifier' => 'modulegroup-datalisting',
+        'labels' => 'LLL:EXT:module_data_listing/Resources/Private/Language/locallang_mod_datalisting.xlf',
+        'position' => [
+            'after' => 'file',
+        ],
+    ],
+    'datalisting_myrecords' => [
+        'parent' => 'datalisting',
+        'access' => 'user',
+        'iconIdentifier' => 'module-listing-report',
+        'labels' => 'LLL:EXT:my_extension/Resources/Private/Language/locallang_mod_myrecords.xlf',
+        'extensionName' => 'MyExtension',
+        'controllerActions' => [
+            \MyVendor\MyExtension\Controller\MyRecordsController::class => [
+                'index',
+            ],
+        ],
+    ],
 ];
 ```
 
